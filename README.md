@@ -4,6 +4,8 @@ A 3D stickman war game made with Godot 4.7.2 (Compatibility renderer, GDScript).
 fighting on the battlefield while commanding an army that spawns from your fortress. Destroy the enemy fortress to win.
 Created by **Junyuan**.
 
+**Play it in your browser: <https://cronustjy-sketch.github.io/stick-legion/>** (works on phones too; the first load downloads about 40 MB).
+
 ## Controls
 
 | | Keyboard + mouse | Phone |
@@ -32,6 +34,8 @@ Open the project in Godot 4.7.2 and press F5 (starts on the main menu), or:
    (or use Project > Export > Web). The build goes to `build/web/` (single-threaded, so it works on any static host).
 3. Test it locally: `powershell -ExecutionPolicy Bypass -File tools/serve_web.ps1`, then open <http://localhost:8080>.
 4. Upload the contents of `build/web/` to any static host (itch.io "HTML5" project, GitHub Pages, Cloudflare Pages, ...).
+
+The public copy lives on the `gh-pages` branch (GitHub Pages). To update it after a new export, copy the files of `build/web/` into a checkout of that branch (plus an empty `.nojekyll` file), commit and push.
 
 ## Sound
 

@@ -108,3 +108,5 @@
   title screen with animated 3D backdrop (Quit hidden on the web), Play -> story cards -> campaign map (progress saved in the browser) -> battle with HUD and locked unit buttons.
   At phone size (844x390) with `?touch=1` the touch controls appear and fake touches moved the hero with the joystick and attacked. Touch controls turn on automatically when the main pointer is
   a finger (`(pointer: coarse)`), or with `?touch=1` in the address; phones never try to capture the pointer. See README.md for how to host the build.
+- **Published**: the Web build is live on GitHub Pages at https://cronustjy-sketch.github.io/stick-legion/ (branch `gh-pages`, files from `build/web/` plus `.nojekyll`; the `main` branch is unchanged
+  by deploys). To update: re-export, copy `build/web/*` into a `gh-pages` checkout, commit, push.
