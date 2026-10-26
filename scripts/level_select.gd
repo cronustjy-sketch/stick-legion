@@ -21,6 +21,7 @@ var _cleared_label: Label
 
 
 func _ready() -> void:
+	Settings.init()
 	GameState.load_progress()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	get_tree().paused = false
@@ -32,6 +33,10 @@ func _ready() -> void:
 	_refresh()
 	if OS.get_cmdline_user_args().has("--select-test"):
 		_run_test()
+	elif OS.get_cmdline_user_args().has("--menu-test"):
+		get_tree().create_timer(0.6).timeout.connect(func() -> void:
+			print("MENU-TEST reached the level select after Play: ok")
+			get_tree().quit())
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -69,6 +74,10 @@ func _build() -> void:
 		b.pressed.connect(_on_node_pressed.bind(lvl))
 		add_child(b)
 		_buttons.append(b)
+	var back: Button = UiStyle.button("Main Menu", Vector2(150, 40), 18)
+	add_child(back)
+	back.position = Vector2(24.0, 64.0)
+	back.pressed.connect(func() -> void: get_tree().change_scene_to_file("res://scenes/main_menu.tscn"))
 	var title: Label = _label("STICK LEGION", 54, GOLD)
 	add_child(title)
 	title.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP, Control.PRESET_MODE_MINSIZE, 18)

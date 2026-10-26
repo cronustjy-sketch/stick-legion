@@ -3,7 +3,7 @@ extends Node3D
 ## Hit feedback: spark bursts, floating damage numbers, expanding rings, and camera shake requests.
 ## Everything is created on demand and cleans itself up; counts are capped so big fights stay smooth.
 
-const MAX_SPARKS: int = 22
+var max_sparks: int = 22
 const MAX_NUMBERS: int = 40
 
 var battle: Battle
@@ -16,6 +16,7 @@ var _ring_mesh: CylinderMesh
 
 
 func _ready() -> void:
+	max_sparks = Settings.max_sparks()
 	_spark_mesh = BoxMesh.new()
 	_spark_mesh.size = Vector3(0.07, 0.07, 0.07)
 	_ring_mesh = CylinderMesh.new()
@@ -28,7 +29,7 @@ func _ready() -> void:
 
 ## A short burst of sparks at a hit.
 func sparks(pos: Vector3, color: Color = Color("ffd24a"), amount: int = 8) -> void:
-	if _live_sparks >= MAX_SPARKS:
+	if _live_sparks >= max_sparks:
 		return
 	_live_sparks += 1
 	var p: CPUParticles3D = CPUParticles3D.new()

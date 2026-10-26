@@ -68,3 +68,10 @@
   winning level 20 shows CAMPAIGN COMPLETE.
   Tests (battle tests now need the scene: `godot --path . res://scenes/battle.tscn -- --boss-test`): `--boss-test` (BOSS-TEST lines, `screenshots/step10_*.png`);
   `godot --path . -- --select-test` (the map, then starts level 7).
+- **Step 11: Main menu, settings, credits, pause** — the game now starts on a title screen (`scenes/main_menu.tscn`): 3D backdrop with the hero and a skirmish,
+  Play (-> campaign map), Settings, Credits ("A game by Junyuan"; "Created by Junyuan" is also on the title), Quit (hidden on the web). Settings
+  (`scripts/settings.gd`, saved to `user://settings.cfg`): master / music / effects volume (audio buses Music and SFX are created for step 12), mouse sensitivity,
+  graphics quality Low / Medium / High (Low = fewer trees and rocks, fewer sparks, no unit outlines), fullscreen. In a battle, Esc opens the pause menu
+  (Resume / Settings / Level Select / Main Menu); hold Alt to use the mouse on the HUD buttons. The campaign map has a Main Menu button.
+  Tests: `godot --path . -- --menu-test` (menu -> settings -> credits -> Play; saves `screenshots/step11_*.png`),
+  `godot --path . res://scenes/battle.tscn -- --pause-test`.

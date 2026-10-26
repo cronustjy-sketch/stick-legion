@@ -183,7 +183,7 @@ func _build_top_center(root: Control) -> void:
 func _build_top_right(root: Control) -> void:
 	var p: PanelContainer = _panel(root)
 	_anchor(p, 1.0, 0.0, 14.0)
-	var l: Label = _label("WASD move   Shift sprint   Space roll\nLeft click attack   Right click block\nZ X C V B N M , . /  spawn units\nEsc  free the mouse", 14, DIM)
+	var l: Label = _label("WASD move   Shift sprint   Space roll\nLeft click attack   Right click block\nZ X C V B N M , . /  spawn units\nEsc  pause   Hold Alt  use the mouse", 14, DIM)
 	p.add_child(l)
 
 

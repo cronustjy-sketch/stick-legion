@@ -13,6 +13,7 @@ var swallow_click: bool = false  # the click that grabs the mouse must not also 
 var camera: Camera3D
 var tactical: bool = false  # Tab held: high view of the whole fight
 var _tac_t: float = 0.0
+var _alt_freed: bool = false
 var _shake_amp: float = 0.0
 var _shake_time: float = 0.0
 var _shake_total: float = 0.01
@@ -34,8 +35,8 @@ func _ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		var m: InputEventMouseMotion = event
-		yaw -= m.relative.x * float(HeroData.CAMERA.mouse_sensitivity)
-		pitch = clampf(pitch + m.relative.y * float(HeroData.CAMERA.mouse_sensitivity), -0.25, 1.25)
+		yaw -= m.relative.x * float(HeroData.CAMERA.mouse_sensitivity) * Settings.mouse_sens
+		pitch = clampf(pitch + m.relative.y * float(HeroData.CAMERA.mouse_sensitivity) * Settings.mouse_sens, -0.25, 1.25)
 	elif event is InputEventMouseButton:
 		var b: InputEventMouseButton = event
 		if b.pressed and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
@@ -45,8 +46,6 @@ func _unhandled_input(event: InputEvent) -> void:
 			distance = maxf(distance - float(HeroData.CAMERA.zoom_step), float(HeroData.CAMERA.min_distance))
 		elif b.pressed and b.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			distance = minf(distance + float(HeroData.CAMERA.zoom_step), float(HeroData.CAMERA.max_distance))
-	elif event.is_action_pressed("ui_cancel"):
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 
 ## Screen shake: `amount` is roughly metres of camera offset at the start, fading out over `time` seconds.
@@ -58,6 +57,13 @@ func shake(amount: float, time: float = 0.25) -> void:
 
 
 func _process(delta: float) -> void:
+	# Hold Alt to use the mouse on the HUD buttons; let go and the camera takes it back.
+	if Input.is_key_pressed(KEY_ALT) and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+		_alt_freed = true
+	elif _alt_freed and not Input.is_key_pressed(KEY_ALT):
+		_alt_freed = false
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	if target == null:
 		return
 	_focus = _focus.lerp(target.global_position, clampf(14.0 * delta, 0.0, 1.0))

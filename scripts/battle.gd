@@ -23,6 +23,7 @@ var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
 
 func _ready() -> void:
+	Settings.init()
 	InputSetup.ensure()
 	_rng.seed = BattlefieldData.SCENE_SEED
 	_build_environment()
@@ -43,6 +44,10 @@ func _ready() -> void:
 	army.name = "Army"
 	army.battle = self
 	add_child(army)
+	var pause: PauseMenu = PauseMenu.new()
+	pause.name = "PauseMenu"
+	pause.battle = self
+	add_child(pause)
 	_setup_level()  # before the HUD, so it shows the right level, fortress HP and boss
 	hud = Hud.new()
 	hud.name = "Hud"
@@ -69,6 +74,9 @@ func _ready() -> void:
 		var ut: UnitsAutotest = UnitsAutotest.new()
 		ut.battle = self
 		add_child(ut)
+	if args.has("--pause-test"):
+		spawner.enabled = false
+		_run_pause_test()
 	if args.has("--select-test"):
 		spawner.enabled = false
 		get_tree().create_timer(1.5).timeout.connect(func() -> void:
@@ -167,7 +175,7 @@ func _scatter_props() -> void:
 	var blobs: Array[Vector3] = []  # x, z, radius
 	var placed: int = 0
 	var guard: int = 0
-	while placed < BattlefieldData.TREE_COUNT and guard < 2000:
+	while placed < int(round(float(BattlefieldData.TREE_COUNT) * Settings.prop_density())) and guard < 2000:
 		guard += 1
 		var side: float = -1.0 if _rng.randf() < 0.5 else 1.0
 		var x: float = side * _rng.randf_range(BattlefieldData.FIELD_HALF_WIDTH + 1.0, 46.0)
@@ -187,7 +195,7 @@ func _scatter_props() -> void:
 
 	# Rocks: flat-shaded faceted blobs; kept at the edges so the field stays open.
 	var rock_mesh: ArrayMesh = _make_rock_mesh()
-	for i: int in BattlefieldData.ROCK_COUNT:
+	for i: int in int(round(float(BattlefieldData.ROCK_COUNT) * Settings.prop_density())):
 		var x: float
 		x = (-1.0 if _rng.randf() < 0.5 else 1.0) * _rng.randf_range(BattlefieldData.FIELD_HALF_WIDTH + 0.5, 42.0)
 		var z: float = _rng.randf_range(-70.0, 70.0)
@@ -364,3 +372,21 @@ func _on_boss_died(_u: Unit) -> void:
 	army.message.emit("Boss defeated! The fortress shield is down!")
 	fx.shake(0.5, 0.8)
 	fx.ring(boss.global_position, 12.0, Color("ffd24a"), 0.8)
+
+
+## Scripted check of the pause menu (godot --path . res://scenes/battle.tscn -- --pause-test).
+func _run_pause_test() -> void:
+	await get_tree().create_timer(1.0).timeout
+	var e: InputEventAction = InputEventAction.new()
+	e.action = "ui_cancel"
+	e.pressed = true
+	Input.parse_input_event(e)
+	await get_tree().create_timer(0.4).timeout
+	var pm: PauseMenu = get_node("PauseMenu")
+	await RenderingServer.frame_post_draw
+	DebugShot.save(get_viewport(), "step11_pause")
+	print("PAUSE-TEST after Esc: menu visible=", pm.visible, " tree paused=", get_tree().paused)
+	pm.close()
+	await get_tree().create_timer(0.3).timeout
+	print("PAUSE-TEST after Resume: menu visible=", pm.visible, " tree paused=", get_tree().paused)
+	get_tree().quit()

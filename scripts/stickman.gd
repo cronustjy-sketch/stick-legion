@@ -134,6 +134,11 @@ func _get_mesh(key: String, team_id: int) -> Dictionary:
 	return entry
 
 
+## Forgets the shared material so the next unit rebuilds it (settings changed the outline option).
+static func reset_material() -> void:
+	_material = null
+
+
 static func _get_material() -> StandardMaterial3D:
 	if _material == null:
 		_material = StandardMaterial3D.new()
@@ -147,7 +152,8 @@ static func _get_material() -> StandardMaterial3D:
 		outline.cull_mode = BaseMaterial3D.CULL_FRONT
 		outline.grow = true
 		outline.grow_amount = 0.016
-		_material.next_pass = outline
+		if Settings.outlines():
+			_material.next_pass = outline
 	return _material
 
 
