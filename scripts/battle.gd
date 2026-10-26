@@ -18,6 +18,7 @@ var spawner: EnemySpawner
 var boss: Boss
 var bosses: Array[Boss] = []
 var ended: bool = false
+var unlock_all: bool = false  # tests only: ignore the unit unlock levels
 
 var _clouds: Node3D
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
@@ -26,6 +27,10 @@ var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 func _ready() -> void:
 	Settings.init()
 	InputSetup.ensure()
+	for a: String in OS.get_cmdline_user_args():
+		if a.ends_with("-test") or a.begins_with("--boss-level="):
+			GameState.persist = false  # scripted tests never touch the real save file
+			unlock_all = true  # ...and may buy any unit
 	_rng.seed = BattlefieldData.SCENE_SEED
 	_build_environment()
 	terrain = Terrain.new()

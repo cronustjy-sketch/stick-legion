@@ -39,6 +39,9 @@ static func library(style: String) -> AnimationLibrary:
 	lib.add_animation("cry", _skill_cry())
 	lib.add_animation("slam", _skill_slam())
 	lib.add_animation("ultimate", _skill_ultimate())
+	lib.add_animation("kneel", _story_kneel())
+	lib.add_animation("sit", _story_sit())
+	lib.add_animation("offer", _story_offer())
 	lib.add_animation("block", _block())
 	lib.add_animation("hit", _hit())
 	lib.add_animation("die", _die())
@@ -349,3 +352,31 @@ static func _skill_ultimate() -> Animation:
 		"ThighL": Vector3(56, 0, -8), "KneeL": Vector3(-70, 0, 0), "ThighR": Vector3(-24, 0, 8), "KneeR": Vector3(-60, 0, 0),
 		"Hips_pos": Vector3(0, -0.34, -0.15)}
 	return _make(1.5, false, [[0.0, _pose({})], [0.4, _pose(raise)], [0.72, _pose(raise)], [0.85, _pose(smash)], [1.2, _pose(smash)], [1.5, _pose({})]])
+
+
+# --- Story card poses ----------------------------------------------------------------------------------------
+
+## One knee on the ground, head bowed (Corvin before the throne, Corvin beaten).
+static func _story_kneel() -> Animation:
+	var a: Dictionary = _pose({
+		"Hips_pos": Vector3(0, -0.4, 0.05), "Spine": Vector3(14, 0, 0), "Head": Vector3(22, 0, 0),
+		"ThighL": Vector3(88, 0, -6), "KneeL": Vector3(-92, 0, 0), "FootL": Vector3(8, 0, 0),
+		"ThighR": Vector3(-8, 0, 6), "KneeR": Vector3(-112, 0, 0), "FootR": Vector3(60, 0, 0),
+		"ShoulderL": Vector3(18, 0, -8), "ElbowL": Vector3(25, 0, 0), "ShoulderR": Vector3(18, 0, 8), "ElbowR": Vector3(25, 0, 0)})
+	var b: Dictionary = a.duplicate()
+	b["Hips_pos"] = Vector3(0, -0.41, 0.05)
+	b["Spine"] = Vector3(15, 0, 0)
+	return _make(3.0, true, [[0.0, a], [1.5, b], [3.0, a]])
+
+
+## Sitting on a throne.
+static func _story_sit() -> Animation:
+	var a: Dictionary = _seated({"Hips_pos": Vector3(0, -0.3, 0.1), "Spine": Vector3(-4, 0, 0),
+		"ShoulderL": Vector3(15, 0, -10), "ElbowL": Vector3(70, 0, 0), "ShoulderR": Vector3(15, 0, 10), "ElbowR": Vector3(70, 0, 0)})
+	return _make(2.0, true, [[0.0, a], [2.0, a]])
+
+
+## An open hand held out in front.
+static func _story_offer() -> Animation:
+	var a: Dictionary = _pose({"ShoulderR": Vector3(80, 0, 8), "ElbowR": Vector3(8, 0, 0), "HandR": Vector3(0, 0, 0), "Spine": Vector3(4, 0, 0), "Head": Vector3(4, 0, 0)})
+	return _make(2.0, true, [[0.0, a], [2.0, a]])

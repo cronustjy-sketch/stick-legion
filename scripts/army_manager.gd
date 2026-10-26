@@ -42,6 +42,8 @@ func pop_of(key: String) -> int:
 
 ## Empty string when the unit can be bought, otherwise the reason it cannot.
 func why_not(key: String) -> String:
+	if battle.level < LevelData.unit_unlock(key) and not battle.unlock_all:
+		return "%s unlocks at level %d" % [UnitData.STATS[key].name, LevelData.unit_unlock(key)]
 	if gold < cost_of(key):
 		return "Not enough gold"
 	if pop_used + pop_of(key) > pop_cap:

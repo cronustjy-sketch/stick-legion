@@ -111,7 +111,12 @@ func _process(_delta: float) -> void:
 	for key: String in _buttons:
 		var affordable: bool = battle.army.why_not(key) == ""
 		var b: Button = _buttons[key].button
-		b.modulate = Color.WHITE if affordable else Color(0.55, 0.55, 0.55, 0.9)
+		var locked: bool = battle.level < LevelData.unit_unlock(key) and not battle.unlock_all
+		b.modulate = Color.WHITE if affordable else (Color(0.4, 0.4, 0.45, 0.85) if locked else Color(0.55, 0.55, 0.55, 0.9))
+		var cl: Label = _buttons[key].cost
+		var s: Dictionary = UnitData.STATS[key]
+		cl.text = ("Level %d" % LevelData.unit_unlock(key)) if locked else ("%dg" % int(s.cost) + ("
+%d pop" % int(s.pop) if int(s.pop) > 1 else ""))
 
 
 func show_toast(text: String) -> void:
@@ -144,7 +149,7 @@ func _set_fort(bar: ProgressBar, label: Label, title: String, cur: float, maximu
 func _on_hero_hp(cur: float, maximum: float) -> void:
 	_hero_bar.max_value = maximum
 	_hero_bar.value = cur
-	_hero_label.text = "Hero   %d / %d" % [ceili(cur), int(maximum)]
+	_hero_label.text = "Aldric   %d / %d" % [ceili(cur), int(maximum)]
 
 
 func _on_lives(lives: int) -> void:
@@ -196,7 +201,7 @@ func _build_bottom_left(root: Control) -> void:
 	_anchor(p, 0.0, 1.0, 14.0)
 	var v: VBoxContainer = VBoxContainer.new()
 	p.add_child(v)
-	_hero_label = _label("Hero", 18, TEXT)
+	_hero_label = _label("Aldric", 18, TEXT)
 	_hero_bar = _bar(Color("5fc46a"), Vector2(200, 18))
 	_lives_label = _label("Lives  3", 16, GOLD)
 	v.add_child(_hero_label)

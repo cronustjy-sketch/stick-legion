@@ -94,4 +94,10 @@ func _run() -> void:
 	battle.enemy_fortress.take_damage(99999.0)
 	await _wait(2.4)
 	await _shot("victory")
-	get_tree().quit()
+	var tree: SceneTree = get_tree()
+	var cont: Button = battle.get_node("EndScreen").find_child("Continue", true, false) as Button
+	print("BOSS-TEST victory screen has a Continue button into the story: ", cont != null)
+	if cont != null:
+		cont.pressed.emit()
+		print("BOSS-TEST story cards queued after this boss: ", GameState.story_queue)
+	tree.quit()

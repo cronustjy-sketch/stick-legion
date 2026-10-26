@@ -32,7 +32,8 @@ func show_result(victory: bool, level: int) -> void:
 	var v: VBoxContainer = VBoxContainer.new()
 	v.add_theme_constant_override("separation", 14)
 	panel.add_child(v)
-	var finished: bool = victory and level >= LevelData.LEVEL_COUNT
+	var finished: bool = victory and level == LevelData.LEVEL_COUNT
+	var story_next: bool = victory and StoryFlow.has_after_boss(level)
 	var title: Label = _label(("CAMPAIGN COMPLETE" if finished else "VICTORY") if victory else "DEFEAT", 64 if not finished else 48, Color("e8b44a") if victory else Color("de4b3f"))
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(title)
@@ -43,7 +44,11 @@ func show_result(victory: bool, level: int) -> void:
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 16)
 	v.add_child(row)
-	if victory and not finished:
+	if story_next:
+		row.add_child(_button("Continue", func() -> void:
+			get_tree().paused = false
+			StoryFlow.after_boss(get_tree(), level)))
+	elif victory and not finished:
 		row.add_child(_button("Next Level", func() -> void: _go(level + 1)))
 	row.add_child(_button("Retry", func() -> void: _go(level)))
 	row.add_child(_button("Level Select", _to_map))
@@ -55,9 +60,8 @@ func _to_map() -> void:
 
 
 func _go(level: int) -> void:
-	GameState.current_level = level
 	get_tree().paused = false
-	get_tree().reload_current_scene()
+	StoryFlow.start_level(get_tree(), level)
 
 
 func _button(text: String, on_press: Callable) -> Button:

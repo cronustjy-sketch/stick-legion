@@ -84,3 +84,13 @@
   (two fast duelists; dash and flurry; when one falls the other enrages), Level 20 **Corvin, the Crimson King** (3 phases: greatsword combos + slam; at 66% a ring of red
   elite guards; at 33% he fights alone, faster, under a red sky). Boss taunt banners (appear / defeated / Corvin phase 3 line) are STORY.md's exact words. Aldric now wears his gold scarf.
   Data: `data/bosses.gd`, `data/units.gd` (boss_* keys); code: `scripts/boss.gd`, `scripts/siege_engine_model.gd`. Test: `godot --path . res://scenes/battle.tscn -- --boss-level=5|10|15|20`.
+- **Story retrofit, part 2: story cards, chapters, endings (STORY.md)** — `data/story.gd` holds every card in STORY.md's words (22 cards: prologue x4, four chapter intros,
+  after-boss cards, the Chapter 3 reveal x4, Mira before level 18, the final choice, both endings, credits). `scripts/story_player.gd` plays them: a posed 3D scene using the real
+  stickmen (Aldric with his gold scarf, Mira, King Edmar, young Aldric/Corvin, Corvin), a slow camera pan, typed text at the bottom, click/Space/Enter to advance, Skip button
+  (the final choice cannot be skipped). Flow (`scripts/story_flow.gd`): Play shows the prologue the first time; starting level 1/6/11/16 shows the chapter intro, level 18 Mira's line;
+  after bosses 5/10/15/20 the victory screen offers Continue into the next cards; the final choice (Spare him / End it) leads to the Brothers or the Crown ending, then "A game by Junyuan",
+  and unlocks Endless Mode (button on the campaign map; levels 21+). Seen cards and endings are saved; main menu has a Story button (replay seen cards) and "Endings x / 2".
+  Chapters (4 x 5 levels, names on the map) and unit unlock levels now follow STORY.md (archer 2, spearman 3, shield knight 4, mage 6, assassin 7, priest 8, giant 11, cavalry 12,
+  catapult 13; locked spawn buttons show "Level N"). Mira's random tip on the map. HUD calls the hero Aldric. Scripted tests never touch the save file (`GameState.persist`).
+  Tests: `godot --path . res://scenes/story.tscn -- --story-test` (shows all cards, `screenshots/story_card_*.png`);
+  `... story.tscn -- --story-ending=spare` / `--story-ending=end` (final choice + ending flow); `... battle.tscn -- --boss-level=15` ends by pressing Continue.

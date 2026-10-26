@@ -7,6 +7,7 @@ var _ui: CanvasLayer
 var _menu: VBoxContainer
 var _settings_panel: PanelContainer
 var _credits_panel: PanelContainer
+var _story_panel: PanelContainer
 var _cam: Camera3D
 var _t: float = 0.0
 var _fighters: Array[Stickman] = []
@@ -15,7 +16,12 @@ var _fight_clock: float = 0.0
 
 func _ready() -> void:
 	Settings.init()
+	for a: String in OS.get_cmdline_user_args():
+		if a.ends_with("-test"):
+			GameState.persist = false
 	GameState.load_progress()
+	if OS.get_cmdline_user_args().has("--menu-test"):
+		GameState.mark_all_seen_for_test()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	get_tree().paused = false
 	SkySetup.build(self)
@@ -24,6 +30,7 @@ func _ready() -> void:
 	if OS.get_cmdline_user_args().has("--menu-test"):
 		_run_test()
 	elif OS.get_cmdline_user_args().has("--flow-test"):
+		GameState.mark_all_seen_for_test()
 		get_tree().create_timer(1.0).timeout.connect(_on_play)
 
 
@@ -146,6 +153,9 @@ func _build_ui() -> void:
 	var play: Button = UiStyle.button("Play", Vector2(300, 64), 30)
 	play.pressed.connect(_on_play)
 	_menu.add_child(play)
+	var story: Button = UiStyle.button("Story", Vector2(300, 56), 24)
+	story.pressed.connect(_show_story)
+	_menu.add_child(story)
 	var settings: Button = UiStyle.button("Settings", Vector2(300, 56), 24)
 	settings.pressed.connect(_show_settings)
 	_menu.add_child(settings)
@@ -159,6 +169,12 @@ func _build_ui() -> void:
 	var by: Label = UiStyle.label("Created by Junyuan", 22, UiStyle.TEXT)
 	root.add_child(by)
 	by.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT, Control.PRESET_MODE_MINSIZE, 24)
+	var endings: Label = UiStyle.label("Endings  %d / 2" % GameState.endings.size(), 22, UiStyle.GOLD)
+	root.add_child(endings)
+	endings.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT, Control.PRESET_MODE_MINSIZE, 24)
+	_story_panel = UiStyle.panel(root)
+	_story_panel.visible = false
+	_center(_story_panel)
 	_settings_panel = UiStyle.panel(root)
 	_settings_panel.visible = false
 	var sp: SettingsPanel = SettingsPanel.new()
@@ -193,6 +209,7 @@ func _center(c: Control) -> void:
 
 func _show_menu() -> void:
 	_menu.visible = true
+	_story_panel.visible = false
 	_settings_panel.visible = false
 	_credits_panel.visible = false
 
@@ -208,7 +225,7 @@ func _show_credits() -> void:
 
 
 func _on_play() -> void:
-	get_tree().change_scene_to_file("res://scenes/level_select.tscn")
+	StoryFlow.on_play(get_tree())
 
 
 # --- Scripted check (godot --path . -- --menu-test) ---------------------------------------------------------
@@ -244,3 +261,38 @@ func _run_test() -> void:
 	Settings.save()
 	_show_menu()
 	_on_play()
+
+
+# --- Story replay -------------------------------------------------------------------------------------------
+
+## Lists every story card; the ones you have seen can be replayed, the rest stay locked.
+func _show_story() -> void:
+	_menu.visible = false
+	for c: Node in _story_panel.get_children():
+		c.queue_free()
+	var outer: VBoxContainer = VBoxContainer.new()
+	outer.add_theme_constant_override("separation", 10)
+	_story_panel.add_child(outer)
+	outer.add_child(UiStyle.label("Story", 40, UiStyle.GOLD))
+	var scroll: ScrollContainer = ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(620, 380)
+	outer.add_child(scroll)
+	var list: VBoxContainer = VBoxContainer.new()
+	list.add_theme_constant_override("separation", 6)
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(list)
+	for g: int in StoryData.GROUPS.size():
+		list.add_child(UiStyle.label(StoryData.GROUPS[g], 20, UiStyle.GOLD))
+		for id: String in StoryData.CARDS:
+			var card: Dictionary = StoryData.CARDS[id]
+			if int(card.group) != g or bool(card.get("hidden", false)):
+				continue
+			var seen: bool = GameState.has_seen(id)
+			var b: Button = UiStyle.button(String(card.name) if seen else "???  (not seen yet)", Vector2(560, 40), 18)
+			b.disabled = not seen
+			b.pressed.connect(func() -> void: StoryFlow.play(get_tree(), [id], StoryFlow.MENU_SCENE, true))
+			list.add_child(b)
+	var back: Button = UiStyle.button("Back", Vector2(200, 48), 22)
+	back.pressed.connect(_show_menu)
+	outer.add_child(back)
+	_story_panel.visible = true

@@ -18,15 +18,20 @@ var _info_title: Label
 var _info_body: Label
 var _start: Button
 var _cleared_label: Label
+var _chapter_label: Label
 
 
 func _ready() -> void:
 	Settings.init()
+	for a: String in OS.get_cmdline_user_args():
+		if a.ends_with("-test"):
+			GameState.persist = false
 	GameState.load_progress()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	get_tree().paused = false
 	selected = clampi(GameState.highest_unlocked, 1, LevelData.LEVEL_COUNT)
 	if OS.get_cmdline_user_args().has("--select-test"):
+		GameState.mark_all_seen_for_test()
 		GameState.highest_unlocked = 1
 		selected = 1
 	_build()
@@ -89,6 +94,14 @@ func _build() -> void:
 	_cleared_label = _label("", 20, GREEN)
 	add_child(_cleared_label)
 	_cleared_label.position = Vector2(24.0, 24.0)
+	var tip: Label = _label("Mira: \"%s\"" % StoryData.MIRA_TIPS[randi() % StoryData.MIRA_TIPS.size()], 18, Color("f6d98a"))
+	add_child(tip)
+	tip.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP, Control.PRESET_MODE_MINSIZE, 108)
+	if GameState.endless_unlocked():
+		var endless: Button = UiStyle.button("Endless Mode", Vector2(220, 48), 22)
+		add_child(endless)
+		endless.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT, Control.PRESET_MODE_MINSIZE, 18)
+		endless.pressed.connect(func() -> void: StoryFlow.start_level(get_tree(), maxi(GameState.highest_unlocked, LevelData.LEVEL_COUNT + 1)))
 	var panel: PanelContainer = PanelContainer.new()
 	var sb: StyleBoxFlat = StyleBoxFlat.new()
 	sb.bg_color = Color(0.07, 0.08, 0.1, 0.9)
@@ -112,6 +125,8 @@ func _build() -> void:
 	var col: VBoxContainer = VBoxContainer.new()
 	col.custom_minimum_size = Vector2(760.0, 0.0)
 	row.add_child(col)
+	_chapter_label = _label("", 16, DIM)
+	col.add_child(_chapter_label)
 	_info_title = _label("", 28, GOLD)
 	_info_body = _label("", 17, TEXT)
 	col.add_child(_info_title)
@@ -144,8 +159,7 @@ func _select(lvl: int) -> void:
 func _play() -> void:
 	if selected > GameState.highest_unlocked:
 		return
-	GameState.current_level = selected
-	get_tree().change_scene_to_file("res://scenes/battle.tscn")
+	StoryFlow.start_level(get_tree(), selected)
 
 
 func _refresh() -> void:
@@ -175,6 +189,7 @@ func _refresh() -> void:
 	var st: Dictionary = LevelData.settings(selected)
 	var locked_sel: bool = selected > unlocked
 	var title: String = "Level %d  -  %s" % [selected, String(st.name)]
+	_chapter_label.text = "Chapter %d: %s" % [LevelData.chapter_of(selected), LevelData.chapter_name(selected)]
 	_info_title.text = title + ("   (locked)" if locked_sel else "")
 	var names: PackedStringArray = PackedStringArray()
 	for k: String in st.pool:
