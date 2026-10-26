@@ -306,3 +306,16 @@ func _assist_aim() -> void:
 			best_dir = to / d
 	if best_dir != Vector3.ZERO:
 		rotation.y = atan2(-best_dir.x, -best_dir.z)
+
+
+# --- "hittable" interface shared with Unit and Fortress (used by enemy AI) ---------------------------------
+
+var hit_radius: float = 0.45
+
+
+func is_alive() -> bool:
+	return state != State.DEAD
+
+
+func nearest_point(_from: Vector3) -> Vector3:
+	return global_position

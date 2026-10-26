@@ -9,6 +9,10 @@ var player_fortress: Fortress
 var enemy_fortress: Fortress
 var hero: Hero
 var hero_camera: HeroCamera
+var debug_auto_spawn: bool = true  # until the HUD (step 5) and enemy spawner (step 6) exist
+var enemy_level: int = 1
+
+var _spawn_clock: float = 0.0
 
 var _clouds: Node3D
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
@@ -27,7 +31,14 @@ func _ready() -> void:
 	player_fortress = _make_fortress(Fortress.Team.PLAYER, BattlefieldData.FORTRESS_Z, 0.0)
 	enemy_fortress = _make_fortress(Fortress.Team.ENEMY, -BattlefieldData.FORTRESS_Z, PI)
 	_spawn_hero()
-	_spawn_dummies()
+	if OS.get_cmdline_user_args().has("--battle-test"):
+		debug_auto_spawn = false
+		var bt: BattleAutotest = BattleAutotest.new()
+		bt.battle = self
+		add_child(bt)
+	if OS.get_cmdline_user_args().has("--hero-test"):
+		debug_auto_spawn = false
+		_spawn_dummies()  # only the scripted hero test uses punching bags
 	if OS.get_cmdline_user_args().has("--hero-test"):
 		var test: HeroAutotest = HeroAutotest.new()
 		test.battle = self
@@ -51,6 +62,13 @@ func _build_environment() -> void:
 
 
 func _process(delta: float) -> void:
+	if debug_auto_spawn:
+		_spawn_clock += delta
+		if _spawn_clock >= 2.5:
+			_spawn_clock = 0.0
+			for team: int in [0, 1]:
+				if get_tree().get_nodes_in_group("units_team%d" % team).size() < 14:
+					spawn_unit("swordsman", team)
 	if _clouds != null:
 		_clouds.rotation.y += deg_to_rad(0.35) * delta
 
@@ -213,3 +231,23 @@ func _spawn_dummies() -> void:
 		d.position = Vector3(p.x, terrain.height_at(p.x, p.y), p.y)
 		d.rotation.y = PI  # face the hero
 		add_child(d)
+
+
+## Spawns a soldier at its team's fortress gate. Enemy strength follows the level multiplier.
+func spawn_unit(key: String, team: int, spread: float = 4.0) -> Unit:
+	var u: Unit = Unit.new()
+	u.name = "%s_t%d" % [key, team]
+	u.battle = self
+	var z: float = (BattlefieldData.FORTRESS_Z - 8.0) * (1.0 if team == 0 else -1.0)
+	var x: float = randf_range(-spread, spread)
+	u.position = Vector3(x, terrain.height_at(x, z), z)
+	u.rotation.y = 0.0 if team == 0 else PI
+	add_child(u)
+	u.setup(key, team, UnitData.level_multiplier(enemy_level) if team == 1 else 1.0)
+	return u
+
+
+## Spawns `count` of one unit type for a team (used by tests).
+func spawn_wave(key: String, team: int, count: int) -> void:
+	for i: int in count:
+		spawn_unit(key, team, 6.0)

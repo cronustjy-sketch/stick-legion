@@ -27,3 +27,10 @@
   Hero has 150 HP and 3 lives with a 10 s respawn (no HUD yet). Tab tactical view comes in step 7, skills in step 9.
   Test by hand: F5. Scripted test: `godot --path . -- --hero-test` (presses real input actions, saves `screenshots/step3_*.png`,
   prints `HERO-TEST` results: full combo = 62 damage, fortress takes damage, invincible while rolling).
+- **Step 4: Units + AI** — `scripts/unit.gd`: any `UnitData` soldier with the shared rig. AI: nearest enemy in aggro range
+  (enemy units also hunt the hero), otherwise march on the enemy fortress; walk until in range, attack on cooldown with the
+  strike timed to the animation; friends spread out instead of stacking; death anim then the body disappears after 6 s.
+  `Battle.spawn_unit(key, team)` spawns at a fortress gate (enemy strength = `UnitData.level_multiplier(level)`). Until the HUD
+  and enemy spawner exist (steps 5-6) the battle auto-spawns a swordsman per team every 2.5 s (max 14 each) so you can watch
+  armies fight; the hero can join in (`hittable_enemy` group). Scripted test: `godot --path . -- --battle-test` (two armies of 10,
+  saves `screenshots/step4_*.png`, prints BATTLE-TEST counts; stays at 60 fps).

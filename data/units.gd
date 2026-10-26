@@ -43,3 +43,15 @@ const LOOKS: Dictionary = {
 	"priest": {"helmet": "circlet", "shoulders": false, "chest": "robe", "cape": true, "belt": true,
 		"main": "staff", "off": "", "style": "cast", "scale": 1.0, "white_robe": true},
 }
+
+## Animation timing used by the unit AI: when in the "attack" animation the hit lands, and how long it is.
+const ATTACK_TIMING: Dictionary = {
+	"swing": {"strike": 0.34, "length": 0.8},
+	"thrust": {"strike": 0.45, "length": 0.9},
+	"shoot": {"strike": 0.85, "length": 1.4},
+	"cast": {"strike": 0.6, "length": 1.2},
+}
+
+## Enemy strength at a campaign level (level 1 = 1.0).
+static func level_multiplier(level: int) -> float:
+	return 1.0 + 0.11 * float(level - 1)
