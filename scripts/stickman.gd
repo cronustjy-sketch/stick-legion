@@ -234,6 +234,9 @@ func _build_gear(m: RigMesh) -> void:
 			m.sphere("Shoulder" + side, Vector3(s * (SX + 0.01), 1.55, 0), 0.135, _metal(), Vector3(1.0, 0.6, 1.05))
 			m.sphere("Shoulder" + side, Vector3(s * (SX + 0.05), 1.49, 0), 0.115, _metal().darkened(0.12), Vector3(0.75, 0.55, 0.95), 6)
 	_chest(m, String(look.chest))
+	if bool(look.get("scarf", false)):  # Aldric's gold scarf: a collar and a tail
+		m.tcyl("Spine", 1.46, 1.58, 0.125, 0.105, 0.85, _cloth(), 8)
+		m.box("Spine", Vector3(0.09, 1.22, 0.13), Vector3(0.12, 0.62, 0.03), _cloth())
 	if bool(look.belt):
 		m.tcyl("Spine", 0.96, 1.07, 0.12, 0.115, 0.72, C_LEATHER, 8)
 		m.box("Spine", Vector3(0, 1.015, -0.1), Vector3(0.09, 0.08, 0.03), _plume())
@@ -334,6 +337,12 @@ func _weapon(m: RigMesh, kind: String, bone: String, hand: Vector3, side: float)
 		"axe":
 			m.cyl(bone, Vector3(0, -0.2, 0), Vector3(0, 0.95, 0), 0.03, 0.03, C_WOOD, 5)
 			m.box(bone, Vector3(0, 0.82, -0.1), Vector3(0.035, 0.26, 0.22), metal.lightened(0.15))
+		"greatsword":
+			m.cyl(bone, Vector3(0, -0.12, 0), Vector3(0, 0.12, 0), 0.03, 0.03, C_LEATHER, 5)
+			m.box(bone, Vector3(0, 0.14, 0), Vector3(0.34, 0.05, 0.07), Color("2a2528"))
+			m.box(bone, Vector3(0, 0.95, 0), Vector3(0.13, 1.6, 0.035), Color("1d1b1f"))
+			m.box(bone, Vector3(0, 0.95, -0.02), Vector3(0.02, 1.6, 0.045), _plume())
+			m.cyl(bone, Vector3(0, 1.75, 0), Vector3(0, 1.95, 0), 0.065, 0.0, Color("1d1b1f"), 4)
 		"hammer":
 			m.cyl(bone, Vector3(0, -0.2, 0), Vector3(0, 1.0, 0), 0.03, 0.03, C_WOOD, 5)
 			m.box(bone, Vector3(0, 1.0, 0), Vector3(0.22, 0.15, 0.15), metal)

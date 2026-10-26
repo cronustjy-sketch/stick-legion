@@ -2,9 +2,25 @@ class_name SkySetup
 extends RefCounted
 ## Shared sky, light and low-poly clouds for the battle and the rig showcase.
 
+static var sky_mat: ProceduralSkyMaterial
+static var env: Environment
+
+
+## Corvin phase 3: the sky turns red (and back to blue when `on` is false).
+static func set_red_sky(owner: Node, on: bool) -> void:
+	if sky_mat == null:
+		return
+	var t: Tween = owner.create_tween().set_parallel(true)
+	t.tween_property(sky_mat, "sky_top_color", Color("6e1612") if on else Color("2c6cc4"), 2.5)
+	t.tween_property(sky_mat, "sky_horizon_color", Color("e8602e") if on else Color("9fd2f2"), 2.5)
+	t.tween_property(sky_mat, "ground_horizon_color", Color("c0502a") if on else Color("a8c4a4"), 2.5)
+	if env != null:
+		t.tween_property(env, "fog_light_color", Color("d8683a") if on else Color("b4d6ee"), 2.5)
+		t.tween_property(env, "ambient_light_color", Color("e0a090") if on else Color("c4d2e8"), 2.5)
+
 
 static func build(parent: Node3D) -> Node3D:
-	var sky_mat: ProceduralSkyMaterial = ProceduralSkyMaterial.new()
+	sky_mat = ProceduralSkyMaterial.new()
 	sky_mat.sky_top_color = Color("2c6cc4")
 	sky_mat.sky_horizon_color = Color("9fd2f2")
 	sky_mat.sky_curve = 0.25
@@ -13,7 +29,7 @@ static func build(parent: Node3D) -> Node3D:
 	sky_mat.sun_angle_max = 12.0
 	var sky: Sky = Sky.new()
 	sky.sky_material = sky_mat
-	var env: Environment = Environment.new()
+	env = Environment.new()
 	env.background_mode = Environment.BG_SKY
 	env.sky = sky
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR

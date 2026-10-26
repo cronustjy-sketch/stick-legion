@@ -79,3 +79,8 @@
   project cache ("Static function reset_material() not found in base Stickman"). Settings now has a `revision` counter and Stickman rebuilds its shared material
   when it changes, so Settings no longer references Stickman. Verified from a deleted `.godot` cache: clean import (no errors), all 51 scripts and 4 scenes load,
   and `godot --path . -- --flow-test` runs main menu -> Play -> level select -> Start -> battle -> buy a unit with zero errors.
+- **Story retrofit, part 1: the four STORY.md bosses** — replaced the placeholder bosses: Level 5 **Grask the Butcher** (huge, two cleavers; charges in straight red corridors and
+  spins), Level 10 **Siege Master Volk** (stands on a giant siege engine, lobs boulders, red meteor circles, calls catapults), Level 15 **The Twin Blades, Sera and Kade**
+  (two fast duelists; dash and flurry; when one falls the other enrages), Level 20 **Corvin, the Crimson King** (3 phases: greatsword combos + slam; at 66% a ring of red
+  elite guards; at 33% he fights alone, faster, under a red sky). Boss taunt banners (appear / defeated / Corvin phase 3 line) are STORY.md's exact words. Aldric now wears his gold scarf.
+  Data: `data/bosses.gd`, `data/units.gd` (boss_* keys); code: `scripts/boss.gd`, `scripts/siege_engine_model.gd`. Test: `godot --path . res://scenes/battle.tscn -- --boss-level=5|10|15|20`.

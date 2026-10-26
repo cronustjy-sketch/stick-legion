@@ -9,6 +9,10 @@ static func create(key: String, team: int) -> UnitVisual:
 			var c: CavalryModel = CavalryModel.new()
 			c.setup(team)
 			return c
+		"boss_volk":
+			var v: SiegeEngineModel = SiegeEngineModel.new()
+			v.setup(team)
+			return v
 		"catapult":
 			var k: CatapultModel = CatapultModel.new()
 			k.setup(team)

@@ -16,6 +16,7 @@ var level: int = 1
 var enemy_level: int = 1
 var spawner: EnemySpawner
 var boss: Boss
+var bosses: Array[Boss] = []
 var ended: bool = false
 
 var _clouds: Node3D
@@ -84,7 +85,7 @@ func _ready() -> void:
 		get_tree().create_timer(1.5).timeout.connect(func() -> void:
 			print("SELECT-TEST battle loaded: level=", level, " boss=", boss != null, " shielded=", enemy_fortress.shielded)
 			get_tree().quit())
-	if args.has("--boss-test"):
+	if args.has("--boss-test") or _has_arg_prefix("--boss-level="):
 		var bt2: BossAutotest = BossAutotest.new()
 		bt2.battle = self
 		add_child(bt2)
@@ -312,8 +313,11 @@ func spawn_wave(key: String, team: int, count: int) -> void:
 
 func _setup_level() -> void:
 	GameState.load_progress()
-	if OS.get_cmdline_user_args().has("--boss-test"):
-		GameState.current_level = 5
+	for a: String in OS.get_cmdline_user_args():
+		if a == "--boss-test":
+			GameState.current_level = 5
+		elif a.begins_with("--boss-level="):
+			GameState.current_level = int(a.get_slice("=", 1))
 	level = GameState.current_level
 	enemy_level = level
 	spawner = EnemySpawner.new()
@@ -356,24 +360,52 @@ func _collapse(f: Fortress) -> void:
 
 func _spawn_boss(lvl: int) -> void:
 	var def: Dictionary = BossData.for_level(lvl)
-	boss = Boss.new()
-	boss.name = "Boss"
-	boss.battle = self
-	add_child(boss)
-	boss.setup(String(def.key), 1, UnitData.level_multiplier(lvl))
-	boss.configure(lvl)
-	var z: float = -(BattlefieldData.FORTRESS_Z - 9.0)
-	boss.global_position = Vector3(0.0, terrain.height_at(0.0, z), z)
-	boss.rotation.y = PI
+	bosses.clear()
+	var keys: Array = def.keys
+	for i: int in keys.size():
+		var b: Boss = Boss.new()
+		b.name = "Boss_%d" % i
+		b.battle = self
+		add_child(b)
+		b.setup(String(keys[i]), 1, 1.0 + 0.06 * float(lvl - 1))  # bosses scale a bit slower than normal enemies
+		b.configure(lvl, def)
+		var z: float = -(BattlefieldData.FORTRESS_Z - 9.0)
+		var x: float = (float(i) - float(keys.size() - 1) * 0.5) * 6.0
+		b.global_position = Vector3(x, terrain.height_at(x, z), z)
+		b.rotation.y = PI
+		b.died.connect(_on_boss_died)
+		bosses.append(b)
+	boss = bosses[0]
 	enemy_fortress.set_shield(true)
-	boss.died.connect(_on_boss_died)
+	# The boss introduces itself a moment after the battle starts.
+	get_tree().create_timer(1.2).timeout.connect(func() -> void:
+		banner(String(def.get("speaker", def.name)), String(def.appear)))
 
 
-func _on_boss_died(_u: Unit) -> void:
-	enemy_fortress.set_shield(false)
-	army.message.emit("Boss defeated! The fortress shield is down!")
-	fx.shake(0.5, 0.8)
-	fx.ring(boss.global_position, 12.0, Color("ffd24a"), 0.8)
+func _on_boss_died(dead: Unit) -> void:
+	var def: Dictionary = BossData.for_level(level)
+	var alive: Array[Boss] = []
+	for b: Boss in bosses:
+		if b.is_alive():
+			alive.append(b)
+	if bool(def.get("link", false)):
+		for b: Boss in alive:
+			b.enter_phase(b.phase + 1)  # the twins: when one falls, the other enrages
+	if alive.is_empty():
+		enemy_fortress.set_shield(false)
+		army.message.emit("Boss defeated! The fortress shield is down!")
+		fx.shake(0.5, 0.8)
+		fx.ring(dead.global_position, 12.0, Color("ffd24a"), 0.8)
+		if String(def.get("defeated", "")) != "":
+			banner(String(def.get("speaker", def.name)), String(def.defeated))
+		if int(def.get("red_sky_phase", 0)) > 0:
+			SkySetup.set_red_sky(self, false)
+
+
+## A big line of dialogue over the battle (boss taunts). The HUD draws it.
+func banner(speaker: String, text: String) -> void:
+	if hud != null:
+		hud.show_banner(speaker, text)
 
 
 ## Scripted check of the pause menu (godot --path . res://scenes/battle.tscn -- --pause-test).
@@ -402,3 +434,10 @@ func _run_flow_test() -> void:
 	print("FLOW-TEST battle reached from the main menu: level=", level, " bought swordsman=", bought,
 		" player units=", get_tree().get_nodes_in_group("units_team0").size(), " enemy units=", get_tree().get_nodes_in_group("units_team1").size())
 	get_tree().quit()
+
+
+func _has_arg_prefix(prefix: String) -> bool:
+	for a: String in OS.get_cmdline_user_args():
+		if a.begins_with(prefix):
+			return true
+	return false

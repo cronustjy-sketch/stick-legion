@@ -146,3 +146,44 @@ func _disc(color: Color) -> MeshInstance3D:
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(mi)
 	return mi
+
+
+## A red corridor on the ground that fills from `a` to `b` (charges and dashes).
+func telegraph_line(a: Vector3, b: Vector3, width: float, time: float) -> void:
+	var dir: Vector3 = b - a
+	dir.y = 0.0
+	var length: float = dir.length()
+	if length < 0.1:
+		return
+	dir /= length
+	var yaw: float = atan2(dir.x, dir.z)
+	var box: BoxMesh = BoxMesh.new()
+	box.size = Vector3(1.0, 0.06, 1.0)
+	var outer: MeshInstance3D = _box_disc(box, Color(0.85, 0.05, 0.05, 0.3))
+	outer.global_position = a + dir * length * 0.5 + Vector3(0.0, 0.12, 0.0)
+	outer.rotation.y = yaw
+	outer.scale = Vector3(width, 1.0, length)
+	var inner: MeshInstance3D = _box_disc(box, Color(1.0, 0.1, 0.05, 0.55))
+	inner.rotation.y = yaw
+	inner.scale = Vector3(width, 1.0, 0.1)
+	inner.global_position = a + Vector3(0.0, 0.16, 0.0)
+	var t: Tween = create_tween()
+	t.tween_method(func(s: float) -> void:
+		inner.scale.z = maxf(length * s, 0.1)
+		inner.global_position = a + dir * length * s * 0.5 + Vector3(0.0, 0.16, 0.0), 0.0, 1.0, time)
+	t.tween_callback(func() -> void:
+		outer.queue_free()
+		inner.queue_free())
+
+
+func _box_disc(mesh: Mesh, color: Color) -> MeshInstance3D:
+	var mi: MeshInstance3D = MeshInstance3D.new()
+	mi.mesh = mesh
+	var m: StandardMaterial3D = StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.albedo_color = color
+	mi.material_override = m
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(mi)
+	return mi

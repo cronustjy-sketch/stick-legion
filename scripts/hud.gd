@@ -24,8 +24,12 @@ var _hero_label: Label
 var _lives_label: Label
 var _toast: Label
 var _boss_panel: PanelContainer
-var _boss_bar: ProgressBar
-var _boss_label: Label
+var _boss_bars: Array[ProgressBar] = []
+var _boss_labels: Array[Label] = []
+var _banner: PanelContainer
+var _banner_speaker: Label
+var _banner_text: Label
+var _banner_tween: Tween
 var _shield_toast_cd: float = 0.0
 var _skill_slots: Dictionary = {}
 var _rage_bar: ProgressBar
@@ -423,31 +427,68 @@ func _on_order(o: int) -> void:
 		b.add_theme_color_override("font_color", Color("ffe9a8") if active else TEXT)
 
 
-# --- Boss bar -----------------------------------------------------------------------------------------
+# --- Boss bar + taunt banner -----------------------------------------------------------------------------
 
 func _build_boss_bar(root: Control) -> void:
 	_boss_panel = _panel(root)
 	_anchor(_boss_panel, 0.5, 0.0, 124.0)
 	var v: VBoxContainer = VBoxContainer.new()
 	_boss_panel.add_child(v)
-	_boss_label = _label("", 20, RED)
-	_boss_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	v.add_child(_boss_label)
-	_boss_bar = _bar(Color("b32a22"), Vector2(520, 20))
-	v.add_child(_boss_bar)
+	for i: int in 2:
+		var l: Label = _label("", 20, RED)
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		v.add_child(l)
+		var b: ProgressBar = _bar(Color("b32a22"), Vector2(520, 20))
+		v.add_child(b)
+		_boss_labels.append(l)
+		_boss_bars.append(b)
 	_boss_panel.visible = false
+	_banner = _panel(root)
+	_anchor(_banner, 0.5, 0.0, 250.0)
+	var bv: VBoxContainer = VBoxContainer.new()
+	_banner.add_child(bv)
+	_banner_speaker = _label("", 22, RED)
+	_banner_speaker.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	bv.add_child(_banner_speaker)
+	_banner_text = _label("", 26, TEXT)
+	_banner_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_banner_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_banner_text.custom_minimum_size = Vector2(640, 0)
+	bv.add_child(_banner_text)
+	_banner.visible = false
+	_banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+
+## A short line of dialogue (boss taunts). Fades after a few seconds.
+func show_banner(speaker: String, text: String) -> void:
+	_banner_speaker.text = speaker
+	_banner_text.text = "\"%s\"" % text
+	_banner.visible = true
+	_banner.modulate.a = 1.0
+	if _banner_tween != null:
+		_banner_tween.kill()
+	_banner_tween = create_tween()
+	_banner_tween.tween_interval(4.0)
+	_banner_tween.tween_property(_banner, "modulate:a", 0.0, 0.8)
+	_banner_tween.tween_callback(func() -> void: _banner.visible = false)
 
 
 func _update_boss_bar() -> void:
 	_shield_toast_cd -= get_process_delta_time()
-	var b: Boss = battle.boss
-	if b == null or not is_instance_valid(b) or not b.is_alive():
-		_boss_panel.visible = false
-		return
-	_boss_panel.visible = true
-	_boss_bar.max_value = b.max_hp
-	_boss_bar.value = b.hp
-	_boss_label.text = "%s%s" % [b.boss_name, "   (enraged)" if b.phase >= 2 else ""]
+	var shown: int = 0
+	for b: Boss in battle.bosses:
+		if shown >= 2 or not is_instance_valid(b) or not b.is_alive():
+			continue
+		_boss_labels[shown].visible = true
+		_boss_bars[shown].visible = true
+		_boss_bars[shown].max_value = b.max_hp
+		_boss_bars[shown].value = b.hp
+		_boss_labels[shown].text = "%s%s" % [b.boss_name, "   (enraged)" if b.phase >= 2 and b.def.thresholds.size() < 2 else ("   (phase %d)" % b.phase if b.def.thresholds.size() >= 2 else "")]
+		shown += 1
+	for i: int in range(shown, 2):
+		_boss_labels[i].visible = false
+		_boss_bars[i].visible = false
+	_boss_panel.visible = shown > 0
 
 
 func _on_shield_blocked() -> void:
