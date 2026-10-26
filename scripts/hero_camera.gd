@@ -73,7 +73,7 @@ func _process(delta: float) -> void:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	if target == null:
 		return
-	_focus = _focus.lerp(target.global_position, clampf(14.0 * delta, 0.0, 1.0))
+	_focus = _focus.lerp(target.global_position, 1.0 - exp(-14.0 * delta))  # frame-rate independent follow
 	var pivot: Vector3 = _focus + Vector3(0.0, float(HeroData.CAMERA.height), 0.0)
 	var basis: Basis = Basis(Vector3.UP, yaw) * Basis(Vector3.RIGHT, -pitch)
 	var forward: Vector3 = basis * Vector3.FORWARD

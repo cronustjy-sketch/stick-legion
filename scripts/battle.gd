@@ -95,6 +95,9 @@ func _ready() -> void:
 	if args.has("--start-test"):
 		spawner.enabled = false
 		_run_start_test()
+	if args.has("--jitter-test"):
+		spawner.enabled = false
+		_run_jitter_test()
 	if args.has("--look-test"):
 		spawner.enabled = false
 		_run_look_test()
@@ -640,3 +643,43 @@ func _run_start_test() -> void:
 	var cam_d: float = hero_camera.distance
 	print("START-TEST default camera distance: ", cam_d, " (was 4.8)")
 	get_tree().quit()
+
+
+## Camera/hero smoothness at an uneven frame rate (godot ... battle.tscn -- --touch --jitter-test): sprints and measures per-frame speed.
+func _run_jitter_test() -> void:
+	unlock_all = true
+	hero.mouse_gate = false
+	Engine.max_fps = 45  # not a multiple of the 60 Hz physics rate: the classic phone stutter case
+	await get_tree().create_timer(0.8).timeout
+	hero.touch_move = Vector2(0.0, -1.0)
+	hero.touch_sprint = true
+	await get_tree().create_timer(0.6).timeout
+	var cam: Camera3D = hero_camera.camera
+	var last_c: Vector3 = cam.global_position
+	var last_h: Vector3 = hero.global_position
+	var probe: JitterProbe = JitterProbe.new()
+	probe.hero = hero
+	probe.cam = cam
+	add_child(probe)
+	await get_tree().create_timer(2.0).timeout
+	hero.touch_move = Vector2.ZERO
+	var cs: Array[float] = probe.cam_speeds
+	var hs: Array[float] = probe.hero_speeds
+	print("JITTER-TEST camera speed per frame: mean ", snappedf(_mean(cs), 0.01), " m/s, spread (std dev) ", snappedf(_std(cs), 0.01), "  |  hero: mean ", snappedf(_mean(hs), 0.01), " std ", snappedf(_std(hs), 0.01), "  (smooth = std near 0)")
+	Engine.max_fps = 0
+	get_tree().quit()
+
+
+func _mean(a: Array[float]) -> float:
+	var s: float = 0.0
+	for v: float in a:
+		s += v
+	return s / float(a.size())
+
+
+func _std(a: Array[float]) -> float:
+	var m: float = _mean(a)
+	var s: float = 0.0
+	for v: float in a:
+		s += (v - m) * (v - m)
+	return sqrt(s / float(a.size()))

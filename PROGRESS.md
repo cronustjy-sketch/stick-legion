@@ -117,3 +117,6 @@
   units are thrown back with a small hop when they die. Boot splash, web loading screen and favicon: gold "STICK LEGION" + a low-poly stickman with a gold banner (`ui/splash_art.svg`, `tools/make_splash.gd`
   -> `ui/splash.png`, `icon.svg`; the loading bar is gold, styled via the Web preset's head include). Tests: `battle.tscn -- --start-test`, `-- --look-test` (screenshots of Aldric from behind/side/front).
 - **Custom domain** legion.cronuschores.xyz: `CNAME` is on the gh-pages branch and is re-added by every deploy (`tools/deploy_pages.ps1`, source file `tools/pages/CNAME`).
+- **Fix: camera glitch while moving (phones/browsers)** — the hero moved on the fixed 60 Hz physics tick while the camera followed in the render frame, so at 30/45/90 fps (phones) he advanced in uneven steps and the
+  camera stuttered. The hero now moves every rendered frame (`Hero._process` -> `_tick`) and the camera follow is frame-rate independent (`1 - exp(-14 dt)`). Measured with `-- --touch --jitter-test` at 45 fps:
+  hero step spread 2.7 -> 0.0 m/s; camera spread ~7 -> 0.3 m/s.

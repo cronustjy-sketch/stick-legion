@@ -47,6 +47,7 @@ var _dead_t: float = 0.0
 
 func _ready() -> void:
 	add_to_group("hero")
+	set_physics_process(false)  # moved in _process, see _process
 	collision_layer = 4
 	collision_mask = 2  # fortress bodies
 	motion_mode = CharacterBody3D.MOTION_MODE_FLOATING
@@ -76,11 +77,15 @@ func forward_vector() -> Vector3:
 	return Vector3(-sin(rotation.y), 0.0, -cos(rotation.y))
 
 
-func _process(_delta: float) -> void:
+## The hero moves every rendered frame (not on the fixed physics tick), so the camera that follows him never
+## sees uneven steps at frame rates that are not 60 (phones, browsers). Long frames are capped for safety.
+func _process(delta_raw: float) -> void:
+	var delta: float = minf(delta_raw, 0.05)
 	trail.active = state == State.ATTACK or (state == State.SKILL and skills.active in ["q", "f", "g"])
+	_tick(delta)
 
 
-func _physics_process(delta: float) -> void:
+func _tick(delta: float) -> void:
 	_roll_cd -= delta
 	_stun -= delta
 	if state == State.DEAD:
