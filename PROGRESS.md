@@ -103,3 +103,8 @@
 - **Step 13 (part 1): phone controls** — `scripts/touch_controls.gd`: left joystick (push to the edge to sprint), Attack / Roll / Block buttons, Map (tactical view) toggle, Pause,
   drag on the right side to look around; skill slots, orders and unit buttons are tappable HUD buttons. Shown automatically on mobile browsers, or set Touch controls to "Always on" in
   Settings. Test: `godot --path . res://scenes/battle.tscn -- --touch --touch-test`.
+- **Step 13: Web export, tested in a browser and at phone size** — Web preset in `export_presets.cfg` (single-threaded, Compatibility renderer, so it runs on any static host without special headers),
+  `tools/export_web.ps1` (build to `build/web/`, 40 MB: 39.5 MB engine wasm + 1 MB game data) and `tools/serve_web.ps1` (local test server, http://localhost:8080). Verified in Chromium:
+  title screen with animated 3D backdrop (Quit hidden on the web), Play -> story cards -> campaign map (progress saved in the browser) -> battle with HUD and locked unit buttons.
+  At phone size (844x390) with `?touch=1` the touch controls appear and fake touches moved the hero with the joystick and attacked. Touch controls turn on automatically when the main pointer is
+  a finger (`(pointer: coarse)`), or with `?touch=1` in the address; phones never try to capture the pointer. See README.md for how to host the build.

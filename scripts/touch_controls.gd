@@ -33,7 +33,11 @@ static func wanted() -> bool:
 	for a: String in OS.get_cmdline_user_args():
 		if a == "--touch":
 			return true
-	return OS.has_feature("web_android") or OS.has_feature("web_ios") or OS.has_feature("android") or OS.has_feature("ios")
+	if OS.has_feature("web"):
+		# A phone or tablet: the main pointer is a finger. "?touch=1" in the address forces the controls on (for testing).
+		var js: String = "(window.matchMedia('(pointer: coarse)').matches || new URLSearchParams(location.search).get('touch') === '1') ? 1 : 0"
+		return int(JavaScriptBridge.eval(js, true)) == 1
+	return OS.has_feature("android") or OS.has_feature("ios")
 
 
 func _ready() -> void:

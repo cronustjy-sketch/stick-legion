@@ -46,7 +46,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		pitch = clampf(pitch + m.relative.y * float(HeroData.CAMERA.mouse_sensitivity) * Settings.mouse_sens, -0.25, 1.25)
 	elif event is InputEventMouseButton:
 		var b: InputEventMouseButton = event
-		if b.pressed and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+		if b.pressed and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED and not bool(target.get("touch_active")):  # phones never grab the pointer
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 			swallow_click = true
 		elif b.pressed and b.button_index == MOUSE_BUTTON_WHEEL_UP:
