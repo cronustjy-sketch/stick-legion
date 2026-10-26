@@ -3,12 +3,13 @@ extends RefCounted
 ## Tunable numbers for the battlefield and fortresses (no gameplay code here).
 
 const VALLEY_LENGTH: float = 120.0
-const VALLEY_HALF_WIDTH: float = 26.0
+const VALLEY_HALF_WIDTH: float = 34.0
+const FIELD_HALF_WIDTH: float = 24.0  # open grass: no trees or rocks inside (48 m wide)
 const TERRAIN_HALF_X: float = 70.0
-const TERRAIN_HALF_Z: float = 80.0
+const TERRAIN_HALF_Z: float = 125.0
 const TERRAIN_CELL: float = 2.0
 
-const FORTRESS_Z: float = 50.0  # distance of each fortress from the centre
+const FORTRESS_Z: float = 70.0  # distance of each fortress from the centre
 
 const FORTRESS: Dictionary = {
 	"max_hp": 3000.0,
@@ -30,6 +31,6 @@ const COLOR_DIRT: Color = Color("8a7650")
 const COLOR_ROCK_SIDE: Color = Color("7c8a63")
 const COLOR_MOUNTAIN: Color = Color("7d8fa8")
 
-const TREE_COUNT: int = 46
-const ROCK_COUNT: int = 26
+const TREE_COUNT: int = 80
+const ROCK_COUNT: int = 36
 const SCENE_SEED: int = 1337

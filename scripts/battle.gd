@@ -8,6 +8,7 @@ var terrain: Terrain
 var player_fortress: Fortress
 var enemy_fortress: Fortress
 
+var _clouds: Node3D
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
 
@@ -38,34 +39,12 @@ func _make_fortress(team: Fortress.Team, z: float, yaw: float) -> Fortress:
 
 
 func _build_environment() -> void:
-	var sky_mat: ProceduralSkyMaterial = ProceduralSkyMaterial.new()
-	sky_mat.sky_top_color = Color("4f86c6")
-	sky_mat.sky_horizon_color = Color("f2c48f")
-	sky_mat.ground_horizon_color = Color("e0b98c")
-	sky_mat.ground_bottom_color = Color("8a7a66")
-	sky_mat.sun_angle_max = 25.0
-	var sky: Sky = Sky.new()
-	sky.sky_material = sky_mat
-	var env: Environment = Environment.new()
-	env.background_mode = Environment.BG_SKY
-	env.sky = sky
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color("b8c4d8")
-	env.ambient_light_energy = 0.55
-	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
-	env.fog_enabled = true
-	env.fog_light_color = Color("e9c9a0")
-	env.fog_density = 0.0006
-	var we: WorldEnvironment = WorldEnvironment.new()
-	we.environment = env
-	add_child(we)
-	var sun: DirectionalLight3D = DirectionalLight3D.new()
-	sun.name = "Sun"
-	sun.light_color = Color("fff0d2")
-	sun.light_energy = 1.0
-	sun.shadow_enabled = false  # blob shadows only
-	sun.rotation_degrees = Vector3(-48.0, 35.0, 0.0)
-	add_child(sun)
+	_clouds = SkySetup.build(self)
+
+
+func _process(delta: float) -> void:
+	if _clouds != null:
+		_clouds.rotation.y += deg_to_rad(0.35) * delta
 
 
 func _toon(c: Color) -> StandardMaterial3D:
@@ -84,11 +63,11 @@ func _build_mountains() -> void:
 	mesh.radial_segments = 6
 	mesh.rings = 1
 	var xfs: Array[Transform3D] = []
-	for i: int in 22:
-		var t: float = float(i) / 22.0
+	for i: int in 26:
+		var t: float = float(i) / 26.0
 		var ang: float = t * TAU
-		var r: float = 135.0 + _rng.randf_range(-10.0, 25.0)
-		var h: float = _rng.randf_range(40.0, 85.0)
+		var r: float = 215.0 + _rng.randf_range(-10.0, 30.0)
+		var h: float = _rng.randf_range(55.0, 110.0)
 		var rad: float = h * _rng.randf_range(0.7, 1.0)
 		var b: Basis = Basis.from_scale(Vector3(rad, h, rad)).rotated(Vector3.UP, _rng.randf() * TAU)
 		xfs.append(Transform3D(b, Vector3(cos(ang) * r, h * 0.5 - 6.0, sin(ang) * r)))
@@ -122,9 +101,9 @@ func _scatter_props() -> void:
 	while placed < BattlefieldData.TREE_COUNT and guard < 2000:
 		guard += 1
 		var side: float = -1.0 if _rng.randf() < 0.5 else 1.0
-		var x: float = side * _rng.randf_range(11.0, 38.0)
-		var z: float = _rng.randf_range(-46.0, 46.0)
-		if absf(z) > 36.0 and absf(x) < 14.0:
+		var x: float = side * _rng.randf_range(BattlefieldData.FIELD_HALF_WIDTH + 1.0, 46.0)
+		var z: float = _rng.randf_range(-78.0, 78.0)
+		if absf(z) > 62.0 and absf(x) < 30.0:
 			continue
 		var s: float = _rng.randf_range(0.9, 1.7)
 		var y: float = terrain.height_at(x, z)
@@ -137,15 +116,12 @@ func _scatter_props() -> void:
 	_add_multimesh("TreeFoliageLow", cone_lo, _toon(Color("3f7a3a")), t_lo)
 	_add_multimesh("TreeFoliageHigh", cone_hi, _toon(Color("4b8b43")), t_hi)
 
-	# Rocks: flat-shaded faceted blobs; a few near the road as cover.
+	# Rocks: flat-shaded faceted blobs; kept at the edges so the field stays open.
 	var rock_mesh: ArrayMesh = _make_rock_mesh()
 	for i: int in BattlefieldData.ROCK_COUNT:
 		var x: float
-		if i < 10:
-			x = _rng.randf_range(-9.0, 9.0)  # cover in the open field
-		else:
-			x = (-1.0 if _rng.randf() < 0.5 else 1.0) * _rng.randf_range(10.0, 34.0)
-		var z: float = _rng.randf_range(-34.0, 34.0)
+		x = (-1.0 if _rng.randf() < 0.5 else 1.0) * _rng.randf_range(BattlefieldData.FIELD_HALF_WIDTH + 0.5, 42.0)
+		var z: float = _rng.randf_range(-70.0, 70.0)
 		var sc: Vector3 = Vector3(_rng.randf_range(0.8, 2.4), _rng.randf_range(0.7, 1.8), _rng.randf_range(0.8, 2.4))
 		var b: Basis = Basis.from_scale(sc).rotated(Vector3.UP, _rng.randf() * TAU)
 		rocks.append(Transform3D(b, Vector3(x, terrain.height_at(x, z) + sc.y * 0.25, z)))
@@ -202,8 +178,8 @@ func _build_camera() -> void:
 	cam.fov = 62.0
 	cam.far = 500.0
 	add_child(cam)
-	cam.position = Vector3(16.0, 30.0, 80.0)
-	cam.look_at(Vector3(0.0, 0.0, -10.0))
+	cam.position = Vector3(14.0, 46.0, 112.0)
+	cam.look_at(Vector3(0.0, 0.0, -14.0))
 	cam.current = true
 
 

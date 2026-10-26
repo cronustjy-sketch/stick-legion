@@ -108,16 +108,19 @@ func _build() -> void:
 	_hp_bar = HpBar3D.new()
 	_hp_bar.name = "HpBar"
 	_hp_bar.setup(Vector2(12.0, 1.1), BattlefieldData.COLOR_GOLD if team == Team.PLAYER else BattlefieldData.COLOR_RED)
-	_hp_bar.position = Vector3(0, kh + 9.5, 0)
+	_hp_bar.position = Vector3(0, kh + 7.0, 0)
 	add_child(_hp_bar)
 	var label: Label3D = Label3D.new()
-	label.text = "我方要塞\nPlayer Fortress" if team == Team.PLAYER else "敌方要塞\nEnemy Fortress"
+	label.text = "Player Fortress" if team == Team.PLAYER else "Enemy Fortress"
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	label.font_size = 64
-	label.pixel_size = 0.02
-	label.outline_size = 16
+	label.fixed_size = true  # same on-screen size for both fortresses at any distance
+	label.font_size = 40
+	label.pixel_size = 0.0009
+	label.outline_size = 12
 	label.no_depth_test = true
-	label.position = Vector3(0, kh + 12.0, 0)
+	label.offset = Vector2(0, 34)  # pixels above the HP bar
+	label.modulate = BattlefieldData.COLOR_GOLD if team == Team.PLAYER else BattlefieldData.COLOR_RED
+	label.position = Vector3(0, kh + 8.3, 0)
 	add_child(label)
 
 

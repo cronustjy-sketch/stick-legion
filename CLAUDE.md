@@ -5,8 +5,8 @@ A **3D stickman war game**. You play a **stickman hero in third person** and fig
 while you **command a stickman army** that spawns from your fortress and fights the enemy army.
 Destroy the enemy fortress to win. Lose if your fortress falls or your hero runs out of lives.
 
-This is a NEW game, separate from Ink Blade (墨刃纪元). Never edit any other project.
-Creator credit in-game must read **"Junyuan"**. UI text: Chinese with English underneath.
+This is a NEW game, separate from Ink Blade. Never edit any other project.
+Creator credit in-game must read **"Junyuan"**. UI text: English only.
 
 ## Engine and target
 - **Godot 4.7.2**, standard build, **GDScript only**, static typing (`var hp: float = 60.0`).
@@ -30,7 +30,7 @@ Creator credit in-game must read **"Junyuan"**. UI text: Chinese with English un
   They render dark unless their texture is ALSO used as emission (~0.22) and normals are regenerated.
 
 ## Core gameplay
-**Battlefield:** a wide 3D valley about 120 m long. Player fortress at one end, enemy fortress at the other.
+**Battlefield:** a wide, long 3D valley about 140 m between the fortresses, with a wide open grass field (40 m or more across) in the middle and trees and rocks only at the edges. Player fortress at one end, enemy fortress at the other.
 Open terrain with some cover (rocks, ruins, trees), so it's not just one straight line.
 
 **Hero (third person):**
@@ -51,16 +51,16 @@ Open terrain with some cover (rocks, ruins, trees), so it's not just one straigh
 **Starting unit roster** (stats are a starting point, tune by playtesting):
 | Unit | HP | DMG | Range (m) | Speed (m/s) | Cooldown | Cost | Pop | Notes |
 |---|---|---|---|---|---|---|---|---|
-| Swordsman 剑兵 | 60 | 10 | 1.2 | 3.0 | 0.9 | 20 | 1 | cheap melee |
-| Archer 弓手 | 36 | 9 | 18 | 2.6 | 1.35 | 30 | 1 | arrows with arc |
-| Spearman 长枪兵 | 75 | 12 | 2.2 | 2.8 | 1.1 | 35 | 1 | ×2 vs big units |
-| Shield Knight 盾卫 | 240 | 15 | 1.3 | 2.2 | 1.0 | 45 | 1 | 35% armour, blocks arrows |
-| Mage 法师 | 42 | 15 | 14 | 2.2 | 2.0 | 60 | 1 | splash 2.5 m |
-| Assassin 刺客 | 48 | 20 | 1.0 | 5.5 | 0.6 | 50 | 1 | 30% crit |
-| Priest 牧师 | 55 | 0 | 10 | 2.5 | 1.4 | 55 | 1 | heals allies 16 |
-| Giant 巨人 | 620 | 38 | 2.8 | 1.4 | 2.2 | 150 | 3 | AOE smash + knockback |
-| Cavalry 骑兵 | 170 | 20 | 1.6 | 7.0 | 1.0 | 90 | 2 | charge ×2 first hit |
-| Catapult 投石车 | 220 | 50 | 35 | 1.2 | 4.2 | 140 | 3 | ×2 vs fortress |
+| Swordsman | 60 | 10 | 1.2 | 3.0 | 0.9 | 20 | 1 | cheap melee |
+| Archer | 36 | 9 | 18 | 2.6 | 1.35 | 30 | 1 | arrows with arc |
+| Spearman | 75 | 12 | 2.2 | 2.8 | 1.1 | 35 | 1 | ×2 vs big units |
+| Shield Knight | 240 | 15 | 1.3 | 2.2 | 1.0 | 45 | 1 | 35% armour, blocks arrows |
+| Mage | 42 | 15 | 14 | 2.2 | 2.0 | 60 | 1 | splash 2.5 m |
+| Assassin | 48 | 20 | 1.0 | 5.5 | 0.6 | 50 | 1 | 30% crit |
+| Priest | 55 | 0 | 10 | 2.5 | 1.4 | 55 | 1 | heals allies 16 |
+| Giant | 620 | 38 | 2.8 | 1.4 | 2.2 | 150 | 3 | AOE smash + knockback |
+| Cavalry | 170 | 20 | 1.6 | 7.0 | 1.0 | 90 | 2 | charge ×2 first hit |
+| Catapult | 220 | 50 | 35 | 1.2 | 4.2 | 140 | 3 | ×2 vs fortress |
 
 **Levels:** a campaign of short battles. Each level raises enemy strength
 (`enemy multiplier = 1 + 0.11 × (level − 1)`), adds new enemy unit types, and every 5th level has a **boss**

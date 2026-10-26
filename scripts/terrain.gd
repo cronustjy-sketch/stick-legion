@@ -14,7 +14,7 @@ func _init() -> void:
 func height_at(x: float, z: float) -> float:
 	var edge: float = smoothstep(BattlefieldData.VALLEY_HALF_WIDTH, BattlefieldData.VALLEY_HALF_WIDTH + 24.0, absf(x))
 	var end: float = smoothstep(BattlefieldData.FORTRESS_Z + 16.0, BattlefieldData.FORTRESS_Z + 40.0, absf(z))
-	var rolling: float = _noise.get_noise_2d(x, z) * 1.6
+	var rolling: float = _noise.get_noise_2d(x, z) * 1.0
 	var near_fort: float = smoothstep(BattlefieldData.FORTRESS_Z - 4.0, BattlefieldData.FORTRESS_Z - 18.0, absf(z))
 	var flatten: float = 1.0 - near_fort * 0.9
 	return rolling * flatten + edge * 14.0 + end * 14.0
@@ -64,8 +64,8 @@ func _tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3) -> void:
 func _ground_colour(p: Vector3) -> Color:
 	var n: float = _noise.get_noise_2d(p.x * 3.1 + 40.0, p.z * 3.1) * 0.5 + 0.5
 	var grass: Color = BattlefieldData.COLOR_GRASS_A.lerp(BattlefieldData.COLOR_GRASS_B, n)
-	# Dirt road along the valley centre line.
-	var road: float = 1.0 - smoothstep(2.5, 4.5, absf(p.x + sin(p.z * 0.08) * 2.0))
+	# (Dirt road removed: the middle of the valley is open grass.)
+	var road: float = 0.0  # open grass field, no road
 	var col: Color = grass.lerp(BattlefieldData.COLOR_DIRT, road * 0.85)
 	# Steep valley sides turn rocky.
 	var rock: float = smoothstep(4.0, 12.0, p.y)
