@@ -35,6 +35,7 @@ func _shot(shot_name: String) -> void:
 
 func _run() -> void:
 	var hero: Hero = battle.hero
+	hero.mouse_gate = false
 	var cam: HeroCamera = battle.hero_camera
 	var dummies: Array[Node] = get_tree().get_nodes_in_group("hittable_enemy").filter(func(n: Node) -> bool: return n is TrainingDummy)
 	hero.struck.connect(func(h: int, c: int) -> void: print("HERO-TEST strike combo=", c, " hits=", h, " hero_z=", snappedf(hero.global_position.z, 0.01)))

@@ -32,6 +32,7 @@ var _roll_t: float = 0.0
 var _roll_cd: float = 0.0
 var _roll_dir: Vector3 = Vector3.FORWARD
 var _stun: float = 0.0
+var mouse_gate: bool = true  # ignore attack/block unless the mouse is captured (so HUD clicks do not swing the sword)
 var _dead_t: float = 0.0
 
 
@@ -75,6 +76,9 @@ func _physics_process(delta: float) -> void:
 		attack_pressed = false
 	var dodge_pressed: bool = Input.is_action_just_pressed("dodge")
 	var block_held: bool = Input.is_action_pressed("block")
+	if mouse_gate and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+		attack_pressed = false
+		block_held = false
 	invincible = false
 	match state:
 		State.FREE:

@@ -34,3 +34,7 @@
   and enemy spawner exist (steps 5-6) the battle auto-spawns a swordsman per team every 2.5 s (max 14 each) so you can watch
   armies fight; the hero can join in (`hittable_enemy` group). Scripted test: `godot --path . -- --battle-test` (two armies of 10,
   saves `screenshots/step4_*.png`, prints BATTLE-TEST counts; stays at 60 fps).
+- **Step 5: HUD (IN PROGRESS, not finished)** — economy (`data/economy.gd`, `scripts/army_manager.gd`: gold +10/s, kill rewards, pop cap 40,
+  spawning), unit portrait icons (`scripts/unit_icons.gd`), HUD (`scripts/hud.gd`), `--hud-test` scripted check. Logic verified
+  (buying, gold/pop limits, hotkey Z). KNOWN BUG: bottom panels (hero HP, spawn buttons, skills) and the top-right hint are
+  positioned partly off-screen at 1280x720 (anchor presets applied before sizing). Needs fixing and a fresh screenshot check.

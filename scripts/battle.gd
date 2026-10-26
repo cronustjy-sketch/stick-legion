@@ -9,6 +9,8 @@ var player_fortress: Fortress
 var enemy_fortress: Fortress
 var hero: Hero
 var hero_camera: HeroCamera
+var army: ArmyManager
+var hud: Hud
 var debug_auto_spawn: bool = true  # until the HUD (step 5) and enemy spawner (step 6) exist
 var enemy_level: int = 1
 
@@ -31,6 +33,18 @@ func _ready() -> void:
 	player_fortress = _make_fortress(Fortress.Team.PLAYER, BattlefieldData.FORTRESS_Z, 0.0)
 	enemy_fortress = _make_fortress(Fortress.Team.ENEMY, -BattlefieldData.FORTRESS_Z, PI)
 	_spawn_hero()
+	army = ArmyManager.new()
+	army.name = "Army"
+	army.battle = self
+	add_child(army)
+	hud = Hud.new()
+	hud.name = "Hud"
+	hud.battle = self
+	add_child(hud)
+	if OS.get_cmdline_user_args().has("--hud-test"):
+		var ht: HudAutotest = HudAutotest.new()
+		ht.battle = self
+		add_child(ht)
 	if OS.get_cmdline_user_args().has("--battle-test"):
 		debug_auto_spawn = false
 		var bt: BattleAutotest = BattleAutotest.new()
@@ -66,7 +80,7 @@ func _process(delta: float) -> void:
 		_spawn_clock += delta
 		if _spawn_clock >= 2.5:
 			_spawn_clock = 0.0
-			for team: int in [0, 1]:
+			for team: int in [1]:  # enemy only; the player buys units with gold
 				if get_tree().get_nodes_in_group("units_team%d" % team).size() < 14:
 					spawn_unit("swordsman", team)
 	if _clouds != null:
@@ -244,6 +258,7 @@ func spawn_unit(key: String, team: int, spread: float = 4.0) -> Unit:
 	u.rotation.y = 0.0 if team == 0 else PI
 	add_child(u)
 	u.setup(key, team, UnitData.level_multiplier(enemy_level) if team == 1 else 1.0)
+	u.died.connect(army.on_unit_died)
 	return u
 
 
