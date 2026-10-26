@@ -33,6 +33,8 @@ func _ready() -> void:
 	_refresh()
 	if OS.get_cmdline_user_args().has("--select-test"):
 		_run_test()
+	elif OS.get_cmdline_user_args().has("--flow-test"):
+		get_tree().create_timer(0.8).timeout.connect(_play)
 	elif OS.get_cmdline_user_args().has("--menu-test"):
 		get_tree().create_timer(0.6).timeout.connect(func() -> void:
 			print("MENU-TEST reached the level select after Play: ok")

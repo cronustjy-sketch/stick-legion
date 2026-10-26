@@ -51,6 +51,7 @@ const C_IRON: Color = Color("3e393c")  # enemy armour
 
 static var _mesh_cache: Dictionary = {}  # "look|team" -> {mesh, skin}
 static var _material: StandardMaterial3D
+static var _material_rev: int = -1
 
 var unit_key: String = ""
 var team: int = 0
@@ -134,13 +135,9 @@ func _get_mesh(key: String, team_id: int) -> Dictionary:
 	return entry
 
 
-## Forgets the shared material so the next unit rebuilds it (settings changed the outline option).
-static func reset_material() -> void:
-	_material = null
-
-
 static func _get_material() -> StandardMaterial3D:
-	if _material == null:
+	if _material == null or _material_rev != Settings.revision:  # rebuilt when the quality setting changed
+		_material_rev = Settings.revision
 		_material = StandardMaterial3D.new()
 		_material.vertex_color_use_as_albedo = true
 		_material.vertex_color_is_srgb = true

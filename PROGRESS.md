@@ -75,3 +75,7 @@
   (Resume / Settings / Level Select / Main Menu); hold Alt to use the mouse on the HUD buttons. The campaign map has a Main Menu button.
   Tests: `godot --path . -- --menu-test` (menu -> settings -> credits -> Play; saves `screenshots/step11_*.png`),
   `godot --path . res://scenes/battle.tscn -- --pause-test`.
+- **Fix: start-up crash** — `settings.gd` called `Stickman.reset_material()` while `stickman.gd` called `Settings`, a circular reference that only broke on a clean
+  project cache ("Static function reset_material() not found in base Stickman"). Settings now has a `revision` counter and Stickman rebuilds its shared material
+  when it changes, so Settings no longer references Stickman. Verified from a deleted `.godot` cache: clean import (no errors), all 51 scripts and 4 scenes load,
+  and `godot --path . -- --flow-test` runs main menu -> Play -> level select -> Start -> battle -> buy a unit with zero errors.

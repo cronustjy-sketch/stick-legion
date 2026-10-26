@@ -74,6 +74,8 @@ func _ready() -> void:
 		var ut: UnitsAutotest = UnitsAutotest.new()
 		ut.battle = self
 		add_child(ut)
+	if args.has("--flow-test"):
+		_run_flow_test()
 	if args.has("--pause-test"):
 		spawner.enabled = false
 		_run_pause_test()
@@ -389,4 +391,14 @@ func _run_pause_test() -> void:
 	pm.close()
 	await get_tree().create_timer(0.3).timeout
 	print("PAUSE-TEST after Resume: menu visible=", pm.visible, " tree paused=", get_tree().paused)
+	get_tree().quit()
+
+
+## Full-path check (godot --path . -- --flow-test): main menu -> Play -> level select -> Start -> this battle.
+func _run_flow_test() -> void:
+	await get_tree().create_timer(3.0).timeout
+	var bought: bool = army.try_spawn("swordsman")
+	await get_tree().create_timer(2.0).timeout
+	print("FLOW-TEST battle reached from the main menu: level=", level, " bought swordsman=", bought,
+		" player units=", get_tree().get_nodes_in_group("units_team0").size(), " enemy units=", get_tree().get_nodes_in_group("units_team1").size())
 	get_tree().quit()

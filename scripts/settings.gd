@@ -13,6 +13,7 @@ static var quality: int = 2  # 0 low, 1 medium, 2 high
 static var fullscreen: bool = false
 static var mouse_sens: float = 1.0
 
+static var revision: int = 0
 static var _loaded: bool = false
 
 
@@ -52,7 +53,7 @@ static func apply() -> void:
 		var wanted: DisplayServer.WindowMode = DisplayServer.WINDOW_MODE_FULLSCREEN if fullscreen else DisplayServer.WINDOW_MODE_WINDOWED
 		if DisplayServer.window_get_mode() != wanted:
 			DisplayServer.window_set_mode(wanted)
-	Stickman.reset_material()  # the outline pass depends on the quality level
+	revision += 1  # lets cached visuals (unit outlines) notice that the quality level changed
 
 
 # Quality-dependent knobs used by the game.

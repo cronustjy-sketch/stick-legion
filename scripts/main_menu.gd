@@ -23,6 +23,8 @@ func _ready() -> void:
 	_build_ui()
 	if OS.get_cmdline_user_args().has("--menu-test"):
 		_run_test()
+	elif OS.get_cmdline_user_args().has("--flow-test"):
+		get_tree().create_timer(1.0).timeout.connect(_on_play)
 
 
 func _process(delta: float) -> void:
