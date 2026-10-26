@@ -1,0 +1,25 @@
+# Godot 4
+.godot/
+.mono/
+data_*/
+*.translation
+
+# Exports
+build/
+export/
+*.apk
+*.aab
+*.exe
+*.pck
+*.zip
+
+# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.tmp
+
+# Claude Code local
+.claude/settings.local.json
