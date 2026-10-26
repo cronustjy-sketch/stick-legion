@@ -120,3 +120,6 @@
 - **Fix: camera glitch while moving (phones/browsers)** — the hero moved on the fixed 60 Hz physics tick while the camera followed in the render frame, so at 30/45/90 fps (phones) he advanced in uneven steps and the
   camera stuttered. The hero now moves every rendered frame (`Hero._process` -> `_tick`) and the camera follow is frame-rate independent (`1 - exp(-14 dt)`). Measured with `-- --touch --jitter-test` at 45 fps:
   hero step spread 2.7 -> 0.0 m/s; camera spread ~7 -> 0.3 m/s.
+- **Fix: camera turning when the joystick moves (phones)** — phone browsers add an emulated mouse motion to every finger drag; if the pointer counted as "captured" (e.g. after closing the pause menu) the
+  joystick finger spun the camera. The camera now ignores mouse motion whenever touch controls are active, and the pause menu no longer captures the pointer on phones. Test: `battle.tscn -- --touch --joy-test`
+  (before: pitch moved -25 deg while the joystick moved; after: 0).

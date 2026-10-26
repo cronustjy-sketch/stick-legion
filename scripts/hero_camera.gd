@@ -40,13 +40,15 @@ func look(rel: Vector2) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+	var touching: bool = target != null and bool(target.get("touch_active"))
+	# On phones the browser turns every finger drag into an emulated mouse motion; the joystick finger must never turn the camera.
+	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and not touching:
 		var m: InputEventMouseMotion = event
 		yaw -= m.relative.x * float(HeroData.CAMERA.mouse_sensitivity) * Settings.mouse_sens
 		pitch = clampf(pitch + m.relative.y * float(HeroData.CAMERA.mouse_sensitivity) * Settings.mouse_sens, -0.25, 1.25)
 	elif event is InputEventMouseButton:
 		var b: InputEventMouseButton = event
-		if b.pressed and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED and not bool(target.get("touch_active")):  # phones never grab the pointer
+		if b.pressed and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED and not touching:  # phones never grab the pointer
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 			swallow_click = true
 		elif b.pressed and b.button_index == MOUSE_BUTTON_WHEEL_UP:

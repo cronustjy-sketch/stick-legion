@@ -68,7 +68,8 @@ func open() -> void:
 func close() -> void:
 	visible = false
 	get_tree().paused = false
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	if not TouchControls.wanted():  # phones never capture the pointer
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
 func _leave(path: String) -> void:

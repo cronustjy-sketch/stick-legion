@@ -95,6 +95,9 @@ func _ready() -> void:
 	if args.has("--start-test"):
 		spawner.enabled = false
 		_run_start_test()
+	if args.has("--joy-test"):
+		spawner.enabled = false
+		_run_joy_test()
 	if args.has("--jitter-test"):
 		spawner.enabled = false
 		_run_jitter_test()
@@ -683,3 +686,32 @@ func _std(a: Array[float]) -> float:
 	for v: float in a:
 		s += (v - m) * (v - m)
 	return sqrt(s / float(a.size()))
+
+
+## Moving the joystick must never turn the camera (godot ... battle.tscn -- --touch --joy-test): sends the emulated mouse motion a phone browser adds to finger drags.
+func _run_joy_test() -> void:
+	hero.mouse_gate = false
+	await get_tree().create_timer(0.8).timeout
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED  # worst case: the pointer got captured (e.g. after closing the pause menu)
+	var yaw0: float = hero_camera.yaw
+	var pitch0: float = hero_camera.pitch
+	var down: InputEventScreenTouch = InputEventScreenTouch.new()
+	down.index = 0
+	down.pressed = true
+	down.position = Vector2(165.0, 455.0)
+	Input.parse_input_event(down)
+	for i: int in 20:
+		var drag: InputEventScreenDrag = InputEventScreenDrag.new()
+		drag.index = 0
+		drag.position = Vector2(165.0 + 40.0 * sin(float(i)), 455.0 - 80.0)
+		drag.relative = Vector2(25.0 * sin(float(i)), -4.0)
+		Input.parse_input_event(drag)
+		var mm: InputEventMouseMotion = InputEventMouseMotion.new()  # the emulated twin of that drag
+		mm.position = drag.position
+		mm.relative = drag.relative
+		Input.parse_input_event(mm)
+		await get_tree().process_frame
+	await get_tree().create_timer(0.3).timeout
+	print("JOY-TEST camera yaw changed by ", snappedf(rad_to_deg(hero_camera.yaw - yaw0), 0.01), " deg, pitch by ", snappedf(rad_to_deg(hero_camera.pitch - pitch0), 0.01), " deg while the joystick moved (expect 0 / 0); hero moved: ", hero.touch_move != Vector2.ZERO)
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	get_tree().quit()
