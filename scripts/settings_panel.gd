@@ -55,8 +55,7 @@ func _ready() -> void:
 	_fullscreen.button_pressed = Settings.fullscreen
 	_fullscreen.add_theme_font_size_override("font_size", 20)
 	_fullscreen.toggled.connect(_on_fullscreen)
-	if not OS.has_feature("web"):
-		add_child(_fullscreen)
+	add_child(_fullscreen)
 	var note: Label = UiStyle.label("Low quality: fewer trees and rocks, fewer sparks, no unit outlines.", 14, UiStyle.DIM)
 	add_child(note)
 	var back: Button = UiStyle.button("Back", Vector2(200, 50), 22)
@@ -107,3 +106,5 @@ func _on_fullscreen(on: bool) -> void:
 	Settings.fullscreen = on
 	Settings.apply()
 	Settings.save()
+	if OS.has_feature("web"):  # browsers only allow fullscreen inside a click, so do it right here
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if on else DisplayServer.WINDOW_MODE_WINDOWED)
