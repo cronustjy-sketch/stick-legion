@@ -36,11 +36,15 @@ func take_damage(amount: float, _from: Vector3 = Vector3.ZERO) -> void:
 		return
 	if shielded:
 		shield_blocked.emit()
+		_sound("zap", -6.0, 0.5)
 		return
+	_sound("crack", -8.0, 0.35)
 	hp = maxf(hp - amount, 0.0)
 	_hp_bar.set_fill(hp / max_hp)
 	hp_changed.emit(hp, max_hp)
 	if hp <= 0.0:
+		Sfx.play("explosion", 0.0)
+		Sfx.play("boom", 0.0)
 		destroyed.emit(team)
 
 
@@ -226,3 +230,14 @@ func set_max_hp(value: float) -> void:
 	hp = value
 	if _hp_bar != null:
 		_hp_bar.set_fill(1.0)
+
+
+var _sound_clock: Dictionary = {}
+
+
+## Plays a sound at the fortress, but not more often than every `gap` seconds.
+func _sound(stream_name: String, volume_db: float, gap: float) -> void:
+	var now: float = Time.get_ticks_msec() / 1000.0
+	if now - float(_sound_clock.get(stream_name, -10.0)) >= gap:
+		_sound_clock[stream_name] = now
+		Sfx.play(stream_name, volume_db, global_position)

@@ -69,6 +69,7 @@ func _physics_process(delta: float) -> void:
 func _impact() -> void:
 	set_physics_process(false)
 	if splash > 0.0:
+		Sfx.play("explosion" if kind == "fireball" else "boulder", -3.0, end)
 		_splash_damage()
 	elif is_instance_valid(target) and bool(target.call("is_alive")):
 		if not _blocked_by_shield():  # a shield knight facing the shooter takes no damage

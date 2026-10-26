@@ -12,6 +12,7 @@ var swallow_click: bool = false  # the click that grabs the mouse must not also 
 
 var camera: Camera3D
 var tactical: bool = false  # Tab held: high view of the whole fight
+var touch_tactical: bool = false  # the Map button on phones toggles it
 var _tac_t: float = 0.0
 var _alt_freed: bool = false
 var _shake_amp: float = 0.0
@@ -30,6 +31,12 @@ func _ready() -> void:
 	camera.current = true
 	if target != null:
 		_focus = target.global_position
+
+
+## Turns the camera by a finger drag (phones).
+func look(rel: Vector2) -> void:
+	yaw -= rel.x * float(HeroData.CAMERA.mouse_sensitivity) * 1.3 * Settings.mouse_sens
+	pitch = clampf(pitch + rel.y * float(HeroData.CAMERA.mouse_sensitivity) * 1.3 * Settings.mouse_sens, -0.25, 1.25)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -75,9 +82,10 @@ func _process(delta: float) -> void:
 	if terrain != null:
 		pos.y = maxf(pos.y, terrain.height_at(pos.x, pos.z) + 0.6)
 	global_position = pos
+	Sfx.set_listener(pos)
 	# Aim at a point ahead of the hero so the hero sits left of centre (over-the-shoulder).
 	var normal: Transform3D = Transform3D(basis, pos).looking_at(pivot + forward * 6.0 + right * float(HeroData.CAMERA.shoulder), Vector3.UP)
-	var want_tactical: bool = Input.is_action_pressed("tactical")
+	var want_tactical: bool = Input.is_action_pressed("tactical") or touch_tactical
 	if want_tactical != tactical:
 		tactical = want_tactical
 		get_tree().call_group("all_units", "set_tactical", tactical)

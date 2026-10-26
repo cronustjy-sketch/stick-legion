@@ -19,6 +19,7 @@ func _ready() -> void:
 	for a: String in OS.get_cmdline_user_args():
 		if a.ends_with("-test"):
 			GameState.persist = false
+	Sfx.music("music_menu")
 	GameState.load_progress()
 	if OS.get_cmdline_user_args().has("--menu-test"):
 		GameState.mark_all_seen_for_test()

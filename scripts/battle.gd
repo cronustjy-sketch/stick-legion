@@ -55,10 +55,16 @@ func _ready() -> void:
 	pause.battle = self
 	add_child(pause)
 	_setup_level()  # before the HUD, so it shows the right level, fortress HP and boss
+	Sfx.music("music_boss" if LevelData.is_boss_level(level) else "music_battle")
 	hud = Hud.new()
 	hud.name = "Hud"
 	hud.battle = self
 	add_child(hud)
+	if TouchControls.wanted():
+		var tc: TouchControls = TouchControls.new()
+		tc.name = "TouchControls"
+		tc.battle = self
+		add_child(tc)
 	var args: PackedStringArray = OS.get_cmdline_user_args()
 	if args.has("--hud-test"):
 		var ht: HudAutotest = HudAutotest.new()
@@ -82,6 +88,12 @@ func _ready() -> void:
 		add_child(ut)
 	if args.has("--flow-test"):
 		_run_flow_test()
+	if args.has("--touch-test"):
+		spawner.enabled = false
+		_run_touch_test()
+	if args.has("--audio-test"):
+		spawner.enabled = false
+		_run_audio_test()
 	if args.has("--pause-test"):
 		spawner.enabled = false
 		_run_pause_test()
@@ -341,11 +353,14 @@ func _finish(victory: bool) -> void:
 	if ended:
 		return
 	ended = true
+	Sfx.music("", 0.6)
 	if victory:
 		GameState.level_won(level)
 		_collapse(enemy_fortress)
+		Sfx.play("fanfare", 0.0)
 	else:
 		_collapse(player_fortress)
+		Sfx.play("defeat", 0.0)
 	# Let the fortress fall for a moment before the result screen appears.
 	await get_tree().create_timer(1.6).timeout
 	var screen: EndScreen = EndScreen.new()
@@ -384,6 +399,7 @@ func _spawn_boss(lvl: int) -> void:
 	enemy_fortress.set_shield(true)
 	# The boss introduces itself a moment after the battle starts.
 	get_tree().create_timer(1.2).timeout.connect(func() -> void:
+		Sfx.play("roar", 0.0)
 		banner(String(def.get("speaker", def.name)), String(def.appear)))
 
 
@@ -446,3 +462,110 @@ func _has_arg_prefix(prefix: String) -> bool:
 		if a.begins_with(prefix):
 			return true
 	return false
+
+
+## Scripted check of sound (godot --path . res://scenes/battle.tscn -- --audio-test): a fight must trigger effects, the right music must play.
+func _run_audio_test() -> void:
+	var hub: Node = get_tree().root.get_node_or_null("AudioHub")
+	print("AUDIO-TEST hub present: ", hub != null, "  music: ", hub.call("current_music"), "  buses: Master/Music/SFX = ",
+		AudioServer.get_bus_index("Master"), "/", AudioServer.get_bus_index("Music"), "/", AudioServer.get_bus_index("SFX"))
+	for i: int in 8:
+		spawn_unit("swordsman", 0, 6.0).global_position = Vector3(float(i) - 4.0, 0.0, 6.0)
+		spawn_unit("archer" if i % 2 == 0 else "swordsman", 1, 6.0).global_position = Vector3(float(i) - 4.0, 0.0, 2.0)
+	Engine.time_scale = 3.0
+	var peak: int = 0
+	var seen: Dictionary = {}
+	for k: int in 120:
+		await get_tree().create_timer(0.1).timeout
+		var playing: int = 0
+		for p: Node in hub.get_children():
+			var ap: AudioStreamPlayer = p as AudioStreamPlayer
+			if ap != null and ap.bus == "SFX" and ap.playing:
+				playing += 1
+				seen[ap.stream.resource_path.get_file()] = true
+		peak = maxi(peak, playing)
+	Engine.time_scale = 1.0
+	print("AUDIO-TEST during a fight: up to ", peak, " effects at once; sounds heard: ", seen.keys())
+	hero.skills.rage = 100.0
+	var e: InputEventAction = InputEventAction.new()
+	e.action = "skill_g"
+	e.pressed = true
+	hero.mouse_gate = false
+	Input.parse_input_event(e)
+	await get_tree().create_timer(0.3).timeout
+	var any: bool = false
+	for p: Node in hub.get_children():
+		var ap2: AudioStreamPlayer = p as AudioStreamPlayer
+		if ap2 != null and ap2.playing and ap2.stream != null and ap2.stream.resource_path.get_file() == "horn.wav":
+			any = true
+	print("AUDIO-TEST ultimate horn playing: ", any)
+	get_tree().quit()
+
+
+## Scripted check of the phone controls (godot --path . res://scenes/battle.tscn -- --touch --touch-test): fake finger touches.
+func _run_touch_test() -> void:
+	await get_tree().create_timer(1.0).timeout
+	var tc: TouchControls = get_node_or_null("TouchControls") as TouchControls
+	print("TOUCH-TEST controls shown: ", tc != null, "  hero touch_active: ", hero.touch_active)
+	var start: Vector3 = hero.global_position
+	var down: InputEventScreenTouch = InputEventScreenTouch.new()
+	down.index = 0
+	down.pressed = true
+	down.position = Vector2(165.0, 455.0)
+	Input.parse_input_event(down)
+	var drag: InputEventScreenDrag = InputEventScreenDrag.new()
+	drag.index = 0
+	drag.position = Vector2(165.0, 455.0 - 90.0)  # push the stick fully up = forward + sprint
+	Input.parse_input_event(drag)
+	await get_tree().create_timer(1.0).timeout
+	await RenderingServer.frame_post_draw
+	DebugShot.save(get_viewport(), "step13_touch_controls")
+	print("TOUCH-TEST joystick forward: hero moved ", snappedf(start.distance_to(hero.global_position), 0.1), " m (sprinting: ", hero.touch_sprint, ")")
+	var up: InputEventScreenTouch = InputEventScreenTouch.new()
+	up.index = 0
+	up.pressed = false
+	up.position = Vector2(165.0, 365.0)
+	Input.parse_input_event(up)
+	await get_tree().create_timer(0.3).timeout
+	var yaw0: float = hero_camera.yaw
+	var d2: InputEventScreenTouch = InputEventScreenTouch.new()
+	d2.index = 2
+	d2.pressed = true
+	d2.position = Vector2(700.0, 300.0)
+	Input.parse_input_event(d2)
+	await get_tree().process_frame
+	var m2: InputEventScreenDrag = InputEventScreenDrag.new()
+	m2.index = 2
+	m2.position = Vector2(760.0, 300.0)
+	m2.relative = Vector2(60.0, 0.0)
+	Input.parse_input_event(m2)
+	await get_tree().process_frame
+	var d3: InputEventScreenTouch = InputEventScreenTouch.new()
+	d3.index = 2
+	d3.pressed = false
+	d3.position = Vector2(760.0, 300.0)
+	Input.parse_input_event(d3)
+	await get_tree().create_timer(0.2).timeout
+	print("TOUCH-TEST camera drag turned the view by ", snappedf(rad_to_deg(hero_camera.yaw - yaw0), 0.1), " degrees")
+	var atk: InputEventScreenTouch = InputEventScreenTouch.new()
+	atk.index = 1
+	atk.pressed = true
+	atk.position = Vector2(1140.0, 455.0)
+	Input.parse_input_event(atk)
+	await get_tree().create_timer(0.25).timeout
+	print("TOUCH-TEST attack button -> hero state ATTACK(1): ", hero.state)
+	atk.pressed = false
+	Input.parse_input_event(atk)
+	await get_tree().create_timer(1.2).timeout
+	var blk: InputEventScreenTouch = InputEventScreenTouch.new()
+	blk.index = 3
+	blk.pressed = true
+	blk.position = Vector2(1040.0, 385.0)
+	Input.parse_input_event(blk)
+	await get_tree().create_timer(0.3).timeout
+	print("TOUCH-TEST block held -> hero state BLOCK(3): ", hero.state)
+	blk.pressed = false
+	Input.parse_input_event(blk)
+	await get_tree().create_timer(0.2).timeout
+	print("TOUCH-TEST skill tap (HUD slot) cast Q: ", hero.skills.try_cast("q"))
+	get_tree().quit()

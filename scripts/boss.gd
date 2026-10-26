@@ -57,6 +57,7 @@ func enter_phase(n: int) -> void:
 	_special_cd = 1.2
 	phase_changed.emit(phase)
 	battle.fx.shake(0.4, 0.6)
+	Sfx.play("roar", 0.0)
 	battle.fx.ring(global_position, 9.0, Color("ff3a2a"), 0.7)
 	var tw: Tween = model.create_tween()
 	var s: Vector3 = model.scale
@@ -156,6 +157,7 @@ func _blast(at: Vector3, radius: float, dmg: float, push: float) -> void:
 	battle.fx.ring(at, radius, Color("ff4a2a"), 0.4)
 	battle.fx.sparks(at + Vector3(0.0, 0.5, 0.0), Color("ff7a3a"), 16)
 	battle.fx.shake(0.2, 0.35)
+	Sfx.play("boom", -2.0, at)
 	for n: Node in get_tree().get_nodes_in_group("units_team0"):
 		var u: Unit = n as Unit
 		if Vector3(u.global_position.x, 0.0, u.global_position.z).distance_to(at) <= radius + u.hit_radius:

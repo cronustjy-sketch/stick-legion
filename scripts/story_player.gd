@@ -65,6 +65,7 @@ func _ready() -> void:
 				GameState.story_queue.append(id)
 		GameState.story_next = "res://scenes/main_menu.tscn"
 	_queue = GameState.story_queue.duplicate()
+	Sfx.music("music_story")
 	_build_world()
 	_build_ui()
 	if _queue.is_empty():
@@ -98,6 +99,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func advance() -> void:
 	if _busy or _card.is_empty() or _choice_box.visible:
 		return
+	Sfx.play("page", -9.0)
 	if _typing:
 		_finish_typing()
 		return

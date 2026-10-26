@@ -23,6 +23,7 @@ var _hero_bar: ProgressBar
 var _hero_label: Label
 var _lives_label: Label
 var _toast: Label
+var _hint_panel: PanelContainer
 var _boss_panel: PanelContainer
 var _boss_bars: Array[ProgressBar] = []
 var _boss_labels: Array[Label] = []
@@ -69,6 +70,8 @@ func _ready() -> void:
 	root.add_child(_respawn_label)
 	_anchor(_respawn_label, 0.5, 0.5, 0.0)
 	_connect_signals()
+	if TouchControls.wanted():
+		_hint_panel.visible = false
 
 
 func _connect_signals() -> void:
@@ -191,6 +194,7 @@ func _build_top_center(root: Control) -> void:
 
 func _build_top_right(root: Control) -> void:
 	var p: PanelContainer = _panel(root)
+	_hint_panel = p
 	_anchor(p, 1.0, 0.0, 14.0)
 	var l: Label = _label("WASD move   Shift sprint   Space roll\nLeft click attack   Right click block\nZ X C V B N M , . /  spawn units\nEsc  pause   Hold Alt  use the mouse", 14, DIM)
 	p.add_child(l)
@@ -316,6 +320,9 @@ func _skill_slot(id: String, size: Vector2) -> Control:
 	cd_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	c.add_child(cd_l)
 	cd_l.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	c.gui_input.connect(func(e: InputEvent) -> void:
+		if e is InputEventMouseButton and e.pressed and (e as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT:
+			battle.hero.skills.try_cast(id))
 	_skill_slots[id] = {"root": c, "bg": bg, "key": key_l, "cover": cover, "cd": cd_l, "size": size}
 	return c
 

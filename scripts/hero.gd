@@ -35,6 +35,12 @@ var _roll_t: float = 0.0
 var _roll_cd: float = 0.0
 var _roll_dir: Vector3 = Vector3.FORWARD
 var _stun: float = 0.0
+var touch_active: bool = false  # on-screen controls feed the fields below
+var touch_move: Vector2 = Vector2.ZERO
+var touch_sprint: bool = false
+var touch_attack: bool = false
+var touch_dodge: bool = false
+var touch_block: bool = false
 var mouse_gate: bool = true  # ignore attack/block unless the mouse is captured (so HUD clicks do not swing the sword)
 var _dead_t: float = 0.0
 
@@ -94,6 +100,13 @@ func _physics_process(delta: float) -> void:
 	if mouse_gate and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		attack_pressed = false
 		block_held = false
+	if touch_active:
+		move_dir = Vector3(touch_move.x, 0.0, touch_move.y).rotated(Vector3.UP, cam_yaw)
+		attack_pressed = touch_attack
+		dodge_pressed = touch_dodge
+		block_held = touch_block
+		touch_attack = false
+		touch_dodge = false
 	if camera != null and camera.tactical:  # the hero stands still while you look at the battlefield
 		move_dir = Vector3.ZERO
 		attack_pressed = false
@@ -137,7 +150,7 @@ func _state_free(delta: float, move_dir: Vector3, attack: bool, dodge: bool, blo
 		state = State.BLOCK
 		return
 	var moving: bool = move_dir.length() > 0.1
-	var sprint: bool = Input.is_action_pressed("sprint") and moving
+	var sprint: bool = (Input.is_action_pressed("sprint") or touch_sprint) and moving
 	var speed: float = float(HeroData.STATS.sprint_speed) if sprint else float(HeroData.STATS.walk_speed)
 	if moving:
 		velocity = move_dir.normalized() * speed
@@ -173,6 +186,7 @@ func _start_attack() -> void:
 	_queued = false
 	var swing: Dictionary = HeroData.COMBO[_combo]
 	assist_aim()
+	Sfx.play("swing_big" if _combo == 2 else "swing", -5.0)
 	model.play(StringName(swing.anim), float(HeroData.STATS.attack_speed), true)
 
 
@@ -213,6 +227,7 @@ func _start_roll(move_dir: Vector3) -> void:
 	_face_yaw = atan2(-_roll_dir.x, -_roll_dir.z)
 	rotation.y = _face_yaw
 	_combo = 0
+	Sfx.play("swing", -9.0, Vector3.INF, 0.7)
 	model.play("roll", 0.6 / float(HeroData.STATS.roll_time), true)
 
 
@@ -246,6 +261,8 @@ func _strike(damage: float) -> void:
 		n.call("take_damage", damage, global_position)
 		skills.add_rage(damage * float(HeroData.RAGE.per_damage_dealt))
 		hits += 1
+	if hits > 0:
+		Sfx.play("hit", -3.0)
 	if hits > 0 and battle != null:
 		battle.fx.shake(0.04 + 0.05 * float(_combo), 0.18)
 	struck.emit(hits, _combo)
@@ -265,6 +282,7 @@ func take_damage(amount: float, from_pos: Vector3) -> bool:
 	hp = maxf(hp - dealt, 0.0)
 	hp_changed.emit(hp, max_hp)
 	skills.add_rage(dealt * float(HeroData.RAGE.per_damage_taken))
+	Sfx.play("clang" if dealt < amount else "hurt", -3.0)
 	if battle != null:
 		battle.fx.number(global_position + Vector3(0.0, 2.3, 0.0), dealt, "hurt")
 		battle.fx.sparks(global_position + Vector3(0.0, 1.2, 0.0), Color("ff5a4a"), 6)
@@ -285,6 +303,7 @@ func _die() -> void:
 	lives -= 1
 	lives_changed.emit(lives)
 	model.play("die", 1.0, true)
+	Sfx.play("death", -2.0)
 	died.emit()
 	if lives <= 0:
 		out_of_lives.emit()
@@ -369,4 +388,5 @@ func heal(amount: float) -> void:
 	if state == State.DEAD:
 		return
 	hp = minf(hp + amount, max_hp)
+	Sfx.play("heal", -6.0)
 	hp_changed.emit(hp, max_hp)

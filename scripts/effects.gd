@@ -122,6 +122,7 @@ func _spark_material(color: Color) -> StandardMaterial3D:
 
 ## Boss attack warning: a red circle on the ground that fills up until the blow lands after `time` seconds.
 func telegraph(pos: Vector3, radius: float, time: float) -> void:
+	Sfx.play("warning", -5.0, pos)
 	var outer: MeshInstance3D = _disc(Color(0.85, 0.05, 0.05, 0.34))
 	outer.global_position = pos + Vector3(0.0, 0.12, 0.0)
 	outer.scale = Vector3(radius, 1.0, radius)
@@ -150,6 +151,7 @@ func _disc(color: Color) -> MeshInstance3D:
 
 ## A red corridor on the ground that fills from `a` to `b` (charges and dashes).
 func telegraph_line(a: Vector3, b: Vector3, width: float, time: float) -> void:
+	Sfx.play("warning", -5.0, a)
 	var dir: Vector3 = b - a
 	dir.y = 0.0
 	var length: float = dir.length()

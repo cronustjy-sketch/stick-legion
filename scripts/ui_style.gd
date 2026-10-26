@@ -43,6 +43,7 @@ static func button(text: String, min_size: Vector2 = Vector2(260, 56), font_size
 	b.focus_mode = Control.FOCUS_NONE
 	b.add_theme_font_size_override("font_size", font_size)
 	b.add_theme_color_override("font_color", TEXT)
+	b.pressed.connect(func() -> void: Sfx.play("click", -6.0))
 	b.add_theme_stylebox_override("normal", box(Color(0.16, 0.14, 0.09, 0.95), GOLD.darkened(0.3), 8, 10))
 	b.add_theme_stylebox_override("hover", box(Color(0.35, 0.28, 0.1, 1.0), GOLD, 8, 10))
 	b.add_theme_stylebox_override("pressed", box(Color(0.45, 0.35, 0.12, 1.0), GOLD.lightened(0.3), 8, 10))

@@ -76,6 +76,7 @@ func cast(id: String, move_dir: Vector3) -> void:
 		hero.assist_aim()
 		_dir = hero.forward_vector()
 	hero.model.play(StringName(def.anim), 1.0, true)
+	Sfx.play({"q": "swing_big", "e": "whoosh_big", "r": "horn", "f": "whoosh_big", "g": "horn"}[id], -3.0)
 	skill_cast.emit(id)
 
 
@@ -116,6 +117,7 @@ func _apply(def: Dictionary) -> void:
 			add_rage(dmg * float(HeroData.RAGE.per_damage_dealt))
 			if n is Unit:
 				(n as Unit).knock_away(hero.global_position, float(def.get("knockback", 0.0)))
+		Sfx.play("boom" if radius >= 5.0 else "hit", -3.0)
 		if battle != null:
 			battle.fx.ring(centre, radius, gold, 0.45)
 			battle.fx.sparks(centre + Vector3(0.0, 0.6, 0.0), gold, 14)
@@ -132,3 +134,13 @@ func _apply(def: Dictionary) -> void:
 		battle.army.message.emit("%s! Army damage +%d%% for %ds" % [def.name, roundi((float(def.buff) - 1.0) * 100.0), int(def.buff_time)])
 	if battle != null:
 		battle.fx.shake(float(def.get("shake", 0.1)), 0.35)
+
+
+## Casts a skill from a button press (HUD slot tapped / clicked) if the hero is able to.
+func try_cast(id: String) -> bool:
+	var h: Hero = hero
+	var ok_state: bool = h.state == Hero.State.FREE or h.state == Hero.State.BLOCK or (h.state == Hero.State.ATTACK and h._struck)
+	if not ok_state or not is_ready(id) or (h.camera != null and h.camera.tactical):
+		return false
+	cast(id, Vector3.ZERO)
+	return true

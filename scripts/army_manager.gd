@@ -59,6 +59,7 @@ func try_spawn(key: String) -> bool:
 		message.emit(reason)
 		return false
 	gold -= cost_of(key)
+	Sfx.play("coin", -4.0)
 	_emit_gold(true)
 	battle.spawn_unit(key, 0)
 	recount_pop()
@@ -92,6 +93,7 @@ func set_order(o: Order) -> void:
 	if o == order:
 		return
 	order = o
+	Sfx.play("order", -4.0)
 	order_changed.emit(o)
 	message.emit("Order: " + ORDER_NAMES[o])
 	get_tree().call_group("units_team0", "refresh_orders")

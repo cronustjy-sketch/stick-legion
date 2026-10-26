@@ -12,6 +12,7 @@ static var sfx: float = 0.8
 static var quality: int = 2  # 0 low, 1 medium, 2 high
 static var fullscreen: bool = false
 static var mouse_sens: float = 1.0
+static var touch: int = 0  # touch controls: 0 automatic (phones), 1 always on, 2 off
 
 static var revision: int = 0
 static var _loaded: bool = false
@@ -28,6 +29,7 @@ static func init() -> void:
 			quality = clampi(int(cfg.get_value("graphics", "quality", quality)), 0, 2)
 			fullscreen = bool(cfg.get_value("graphics", "fullscreen", fullscreen))
 			mouse_sens = clampf(float(cfg.get_value("controls", "mouse_sens", mouse_sens)), 0.3, 3.0)
+			touch = clampi(int(cfg.get_value("controls", "touch", touch)), 0, 2)
 	apply()
 
 
@@ -39,6 +41,7 @@ static func save() -> void:
 	cfg.set_value("graphics", "quality", quality)
 	cfg.set_value("graphics", "fullscreen", fullscreen)
 	cfg.set_value("controls", "mouse_sens", mouse_sens)
+	cfg.set_value("controls", "touch", touch)
 	cfg.save(PATH)
 
 

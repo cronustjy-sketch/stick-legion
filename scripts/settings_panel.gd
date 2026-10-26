@@ -34,6 +34,21 @@ func _ready() -> void:
 	_quality.custom_minimum_size = Vector2(160, 36)
 	_quality.item_selected.connect(_on_quality)
 	qrow.add_child(_quality)
+	var trow: HBoxContainer = HBoxContainer.new()
+	add_child(trow)
+	var tl: Label = UiStyle.label("Touch controls", 20)
+	tl.custom_minimum_size = Vector2(200, 0)
+	trow.add_child(tl)
+	var touch_opt: OptionButton = OptionButton.new()
+	touch_opt.focus_mode = Control.FOCUS_NONE
+	for t: String in ["Automatic", "Always on", "Off"]:
+		touch_opt.add_item(t)
+	touch_opt.select(Settings.touch)
+	touch_opt.custom_minimum_size = Vector2(160, 36)
+	touch_opt.item_selected.connect(func(i: int) -> void:
+		Settings.touch = i
+		Settings.save())
+	trow.add_child(touch_opt)
 	_fullscreen = CheckBox.new()
 	_fullscreen.text = "Fullscreen"
 	_fullscreen.focus_mode = Control.FOCUS_NONE

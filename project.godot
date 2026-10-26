@@ -24,3 +24,7 @@ window/stretch/mode="canvas_items"
 
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
+
+[autoload]
+
+AudioHub="*res://scripts/audio_hub.gd"

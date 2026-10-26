@@ -94,3 +94,12 @@
   catapult 13; locked spawn buttons show "Level N"). Mira's random tip on the map. HUD calls the hero Aldric. Scripted tests never touch the save file (`GameState.persist`).
   Tests: `godot --path . res://scenes/story.tscn -- --story-test` (shows all cards, `screenshots/story_card_*.png`);
   `... story.tscn -- --story-ending=spare` / `--story-ending=end` (final choice + ending flow); `... battle.tscn -- --boss-level=15` ends by pressing Continue.
+- **Step 12: Sound effects and music** — every sound is synthesised, not sampled: `tools/make_audio.gd` (run `godot --headless --path . --script res://tools/make_audio.gd`)
+  writes 26 effects and 4 music loops (menu, battle, boss, story) as WAV files to `audio/` (committed, 3.6 MB). `AudioHub` (autoload, `scripts/audio_hub.gd`) plays them through the
+  SFX / Music buses (the volume sliders in Settings control them) with a voice pool, rate limiting, distance fade, and music crossfades; game scripts use the static `Sfx`
+  (`scripts/sfx.gd`). Sounds: UI clicks, buying a unit, orders, sword swings/hits/blocks, hero hurt/death, all skills, arrows, fireballs, boulders, explosions, healing, unit deaths, fortress
+  cracks and the shield zap, boss warnings / blasts / roars, victory and defeat stingers. Music: menu + map, battle, boss levels, story cards.
+  Test: `godot --path . res://scenes/battle.tscn -- --audio-test` (prints which effects played during a fight and the active music).
+- **Step 13 (part 1): phone controls** — `scripts/touch_controls.gd`: left joystick (push to the edge to sprint), Attack / Roll / Block buttons, Map (tactical view) toggle, Pause,
+  drag on the right side to look around; skill slots, orders and unit buttons are tappable HUD buttons. Shown automatically on mobile browsers, or set Touch controls to "Always on" in
+  Settings. Test: `godot --path . res://scenes/battle.tscn -- --touch --touch-test`.

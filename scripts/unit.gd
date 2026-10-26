@@ -131,6 +131,7 @@ func take_damage(amount: float, from_pos: Vector3 = Vector3.ZERO) -> void:
 	hp -= dealt
 	_update_hp_bar()
 	_hit_fx(dealt)
+	Sfx.play("clang" if blocks_arrows else "hit", -7.0, global_position)
 	if hp <= 0.0:
 		_die()
 		return
@@ -149,6 +150,7 @@ func heal(amount: float) -> void:
 	_update_hp_bar()
 	if hp > before:
 		battle.fx.number(global_position + Vector3(0.0, _bar_height + 0.4, 0.0), hp - before, "heal")
+		Sfx.play("heal", -9.0, global_position)
 
 
 func _die() -> void:
@@ -159,6 +161,7 @@ func _die() -> void:
 	_hp_bar.visible = false
 	_marker.visible = false
 	model.play("die", 1.0, true)
+	Sfx.play("death", -5.0, global_position)
 	var shadow: Node = model.get_node_or_null("BlobShadow")
 	if shadow != null:
 		(shadow as Node3D).visible = false
@@ -254,6 +257,7 @@ func _deal_damage() -> void:
 		target.call("heal", heal_amount)
 		return
 	if ranged != "":
+		Sfx.play({"arrow": "bow", "fireball": "fireball", "boulder": "boom"}.get(ranged, "bow"), -6.0, global_position)
 		Projectile.fire(battle, ranged, team, global_position + Vector3(0.0, 1.5, 0.0), target, damage, splash, projectile_speed, fortress_mult)
 		return
 	var d: float = damage_against(target)
@@ -269,6 +273,7 @@ func _deal_damage() -> void:
 ## The giant's ground smash: hits everything near the target and shoves enemy units back.
 func _smash(d: float) -> void:
 	var centre: Vector3 = _target_point()
+	Sfx.play("boom", -3.0, global_position)
 	for n: Node in get_tree().get_nodes_in_group("units_team%d" % (1 - team)):
 		var u: Unit = n as Unit
 		if u.global_position.distance_to(centre) <= aoe_radius + u.hit_radius:
