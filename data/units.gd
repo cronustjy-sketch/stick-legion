@@ -38,6 +38,8 @@ const LOOKS: Dictionary = {
 		"main": "staff", "off": "", "style": "cast", "scale": 1.0},
 	"assassin": {"helmet": "hood", "shoulders": false, "chest": "leather", "cape": true, "belt": true,
 		"main": "dagger", "off": "dagger", "style": "swing", "scale": 0.97},
+	"hero": {"helmet": "plume", "shoulders": true, "chest": "plate", "cape": true, "belt": true,
+		"main": "sword", "off": "shield", "style": "swing", "scale": 1.12},
 	"priest": {"helmet": "circlet", "shoulders": false, "chest": "robe", "cape": true, "belt": true,
 		"main": "staff", "off": "", "style": "cast", "scale": 1.0, "white_robe": true},
 }

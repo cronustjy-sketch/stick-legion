@@ -59,6 +59,7 @@ var look: Dictionary = {}
 var skeleton: Skeleton3D
 var player: AnimationPlayer
 var _bone_index: Dictionary = {}
+var _current: StringName = &"idle"
 
 
 ## Builds the rig for a unit type ("swordsman", ...) and team (0 = player, 1 = enemy).
@@ -90,11 +91,18 @@ func setup(key: String, team_id: int) -> void:
 	player.play("idle")
 
 
-## Plays an animation by name; does nothing if it is already the current one.
-func play(anim: StringName, speed: float = 1.0) -> void:
+## Plays an animation by name. Asking for the animation that is already current only updates the speed,
+## unless `restart` is true (use it to re-trigger attack / hit / die).
+func play(anim: StringName, speed: float = 1.0, restart: bool = false) -> void:
 	player.speed_scale = speed
-	if player.current_animation != String(anim) or not player.is_playing():
-		player.play(anim)
+	if _current == anim and not restart:
+		return
+	_current = anim
+	player.play(anim)
+
+
+func current_anim() -> StringName:
+	return _current
 
 
 func _build_skeleton() -> void:

@@ -7,12 +7,15 @@ const SHOT_DELAY: float = 3.0
 var terrain: Terrain
 var player_fortress: Fortress
 var enemy_fortress: Fortress
+var hero: Hero
+var hero_camera: HeroCamera
 
 var _clouds: Node3D
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
 
 func _ready() -> void:
+	InputSetup.ensure()
 	_rng.seed = BattlefieldData.SCENE_SEED
 	_build_environment()
 	terrain = Terrain.new()
@@ -23,7 +26,12 @@ func _ready() -> void:
 	_scatter_props()
 	player_fortress = _make_fortress(Fortress.Team.PLAYER, BattlefieldData.FORTRESS_Z, 0.0)
 	enemy_fortress = _make_fortress(Fortress.Team.ENEMY, -BattlefieldData.FORTRESS_Z, PI)
-	_build_camera()
+	_spawn_hero()
+	_spawn_dummies()
+	if OS.get_cmdline_user_args().has("--hero-test"):
+		var test: HeroAutotest = HeroAutotest.new()
+		test.battle = self
+		add_child(test)
 	if OS.is_debug_build() and not OS.has_feature("web"):
 		get_tree().create_timer(SHOT_DELAY).timeout.connect(_save_screenshot)
 
@@ -171,16 +179,6 @@ func _add_multimesh(node_name: String, mesh: Mesh, mat: Material, xfs: Array[Tra
 	return mi
 
 
-func _build_camera() -> void:
-	# Temporary overview camera behind the player fortress; replaced by the hero camera in step 3.
-	var cam: Camera3D = Camera3D.new()
-	cam.name = "OverviewCamera"
-	cam.fov = 62.0
-	cam.far = 500.0
-	add_child(cam)
-	cam.position = Vector3(14.0, 46.0, 112.0)
-	cam.look_at(Vector3(0.0, 0.0, -14.0))
-	cam.current = true
 
 
 func _save_screenshot() -> void:
@@ -190,3 +188,28 @@ func _save_screenshot() -> void:
 	var path: String = dir.path_join("battle_%d.png" % Time.get_unix_time_from_system())
 	img.save_png(path)
 	print("Screenshot saved: ", path)
+
+
+func _spawn_hero() -> void:
+	hero = Hero.new()
+	hero.name = "Hero"
+	hero.terrain = terrain
+	var z: float = BattlefieldData.FORTRESS_Z - 10.0
+	hero.position = Vector3(0.0, terrain.height_at(0.0, z), z)
+	add_child(hero)
+	hero.spawn_position = hero.global_position
+	hero_camera = HeroCamera.new()
+	hero_camera.name = "HeroCamera"
+	hero_camera.target = hero
+	hero_camera.terrain = terrain
+	add_child(hero_camera)
+	hero.camera = hero_camera
+
+
+## Debug punching bags in front of the player fortress (removed once real units exist in step 4).
+func _spawn_dummies() -> void:
+	for p: Vector2 in [Vector2(0.8, 50.5), Vector2(-3.5, 47.0), Vector2(3.5, 44.0)]:
+		var d: TrainingDummy = TrainingDummy.new()
+		d.position = Vector3(p.x, terrain.height_at(p.x, p.y), p.y)
+		d.rotation.y = PI  # face the hero
+		add_child(d)

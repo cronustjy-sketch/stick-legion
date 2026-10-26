@@ -13,6 +13,7 @@ enum Team { PLAYER, ENEMY }
 var max_hp: float = BattlefieldData.FORTRESS.max_hp
 var hp: float = max_hp
 var shielded: bool = false  # enemy fortress is shielded while a boss lives
+var hit_radius: float = 0.0  # part of the "hittable_enemy" interface the hero uses
 
 var _hp_bar: HpBar3D
 var _stone: StandardMaterial3D
@@ -22,12 +23,14 @@ var _dark: StandardMaterial3D
 
 
 func _ready() -> void:
+	if team == Team.ENEMY:
+		add_to_group("hittable_enemy")
 	_make_materials()
 	_build()
 	_hp_bar.set_fill(1.0)
 
 
-func take_damage(amount: float) -> void:
+func take_damage(amount: float, _from: Vector3 = Vector3.ZERO) -> void:
 	if shielded or hp <= 0.0:
 		return
 	hp = maxf(hp - amount, 0.0)
@@ -165,3 +168,17 @@ func _cyl(top: float, bottom: float, h: float, pos: Vector3, mat: Material, side
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(mi)
 	return mi
+
+
+func is_alive() -> bool:
+	return hp > 0.0
+
+
+## Closest point of the fortress footprint to `from` (world space), so melee reach is measured to the walls.
+func nearest_point(from: Vector3) -> Vector3:
+	var f: Dictionary = BattlefieldData.FORTRESS
+	var local: Vector3 = global_transform.affine_inverse() * from
+	var hx: float = float(f.width) * 0.5 + 0.7
+	var hz: float = float(f.depth) * 0.5 + 0.7
+	var clamped: Vector3 = Vector3(clampf(local.x, -hx, hx), 0.0, clampf(local.z, -hz, hz))
+	return global_transform * clamped

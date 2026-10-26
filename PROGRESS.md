@@ -19,3 +19,11 @@
   vs deep red tabard/cape/plume + dark iron, all gear skinned to the bones it sits on, thicker dark outline.
   Test: `godot --path . res://scenes/rig_showcase.tscn` saves `screenshots/step2b_*.png` (lineups, far view,
   one frozen mid-attack duel per unit type) and quits.
+- **Step 3: Hero** — third-person hero (`scripts/hero.gd`, tuning in `data/hero.gd`): WASD move, Shift sprint, Space dodge roll
+  (somersault, invincible for the first 0.42 s), left click 3-hit combo (chop / slash / overhead slam, clicks are buffered,
+  light lunge + aim assist), right click block (75% damage cut from the front, slower strafing). Over-the-shoulder camera
+  (`scripts/hero_camera.gd`): mouse look (click to capture, Esc to release), scroll zoom. Hits go through the
+  `hittable_enemy` group (fortress + 3 debug `TrainingDummy`s in front of the player fortress, replaced in step 4).
+  Hero has 150 HP and 3 lives with a 10 s respawn (no HUD yet). Tab tactical view comes in step 7, skills in step 9.
+  Test by hand: F5. Scripted test: `godot --path . -- --hero-test` (presses real input actions, saves `screenshots/step3_*.png`,
+  prints `HERO-TEST` results: full combo = 62 damage, fortress takes damage, invincible while rolling).

@@ -27,6 +27,9 @@ static func library(style: String) -> AnimationLibrary:
 	lib.add_animation("walk", _locomotion(1.0, 12, 26.0, 45.0, 30.0, 16.0, 55.0, 3.0, 0.03, 4.0))
 	lib.add_animation("run", _locomotion(0.6, 12, 48.0, 85.0, 40.0, 40.0, 95.0, 14.0, 0.07, 6.0))
 	lib.add_animation("attack", _attack(style))
+	lib.add_animation("attack2", _attack_slash())
+	lib.add_animation("attack3", _attack_slam())
+	lib.add_animation("roll", _roll())
 	lib.add_animation("block", _block())
 	lib.add_animation("hit", _hit())
 	lib.add_animation("die", _die())
@@ -193,3 +196,46 @@ static func _die() -> Animation:
 		"Hips_pos": Vector3(0, -0.67, 0.3),
 	})
 	return _make(1.1, false, [[0.0, _pose({})], [0.22, stagger], [0.6, fall], [1.0, lying], [1.1, lying]])
+
+
+## Second swing of the hero combo: a wide horizontal slash driven by a torso twist.
+static func _attack_slash() -> Animation:
+	var arm: Dictionary = {"ShoulderR": Vector3(88, 0, 10), "ElbowR": Vector3(5, 0, 0), "HandR": Vector3(-70, 0, 0),
+		"ShoulderL": Vector3(30, 0, -18), "ElbowL": Vector3(55, 0, 0)}
+	var wind: Dictionary = {"Spine": Vector3(2, -50, 0), "Hips": Vector3(0, -22, 0), "Head": Vector3(0, 30, 0),
+		"ThighL": Vector3(14, 0, -2), "ThighR": Vector3(-14, 0, 2), "Hips_pos": Vector3(0, -0.04, 0.02)}
+	wind.merge(arm)
+	var strike: Dictionary = {"Spine": Vector3(-4, 58, 0), "Hips": Vector3(0, 26, 0), "Head": Vector3(0, -34, 0),
+		"ThighL": Vector3(-14, 0, -2), "KneeL": Vector3(-14, 0, 0), "ThighR": Vector3(26, 0, 2), "KneeR": Vector3(-24, 0, 0),
+		"Hips_pos": Vector3(0, -0.07, -0.06)}
+	strike.merge(arm)
+	return _make(0.7, false, [[0.0, _pose({})], [0.2, _pose(wind)], [0.36, _pose(strike)], [0.52, _pose(strike)], [0.7, _pose({})]])
+
+
+## Third swing of the hero combo: a heavy overhead slam with a lunge.
+static func _attack_slam() -> Animation:
+	var wind: Dictionary = {"ShoulderR": Vector3(165, 0, 6), "ElbowR": Vector3(20, 0, 0), "HandR": Vector3(-20, 0, 0),
+		"ShoulderL": Vector3(120, 0, -22), "ElbowL": Vector3(30, 0, 0), "HandL": Vector3(-65, 0, 0), "Spine": Vector3(16, 0, 0),
+		"Head": Vector3(-8, 0, 0), "ThighL": Vector3(8, 0, -2), "ThighR": Vector3(-8, 0, 2), "Hips_pos": Vector3(0, -0.02, 0.04)}
+	var slam: Dictionary = {"ShoulderR": Vector3(62, 0, 4), "ElbowR": Vector3(0, 0, 0), "HandR": Vector3(-42, 0, 0),
+		"ShoulderL": Vector3(50, 0, -16), "ElbowL": Vector3(35, 0, 0), "HandL": Vector3(0, 0, 0), "Spine": Vector3(-28, 0, 0),
+		"Head": Vector3(14, 0, 0), "ThighL": Vector3(44, 0, -2), "KneeL": Vector3(-40, 0, 0), "ThighR": Vector3(-24, 0, 2),
+		"KneeR": Vector3(-18, 0, 0), "Hips_pos": Vector3(0, -0.14, -0.18)}
+	return _make(1.0, false, [[0.0, _pose({})], [0.35, _pose(wind)], [0.52, _pose(slam)], [0.72, _pose(slam)], [1.0, _pose({})]])
+
+
+## Forward dodge roll: a full somersault, tucked tight so the body stays above ground.
+static func _roll() -> Animation:
+	var tuck: Dictionary = {"Spine": Vector3(-70, 0, 0), "Head": Vector3(-35, 0, 0),
+		"ShoulderL": Vector3(75, 0, -10), "ElbowL": Vector3(105, 0, 0), "ShoulderR": Vector3(75, 0, 10), "ElbowR": Vector3(105, 0, 0),
+		"ThighL": Vector3(105, 0, -4), "KneeL": Vector3(-135, 0, 0), "FootL": Vector3(50, 0, 0),
+		"ThighR": Vector3(105, 0, 4), "KneeR": Vector3(-135, 0, 0), "FootR": Vector3(50, 0, 0)}
+	var keys: Array = [[0.0, _pose({})]]
+	var spin: Array = [[0.08, -35.0, -0.12], [0.2, -120.0, -0.2], [0.32, -210.0, -0.2], [0.44, -300.0, -0.2], [0.52, -360.0, -0.14]]
+	for s: Array in spin:
+		var p: Dictionary = tuck.duplicate()
+		p["Hips"] = Vector3(s[1], 0, 0)
+		p["Hips_pos"] = Vector3(0, s[2], 0)
+		keys.append([s[0], _pose(p)])
+	keys.append([0.6, _pose({})])
+	return _make(0.6, false, keys)

@@ -77,7 +77,7 @@ func _run() -> void:
 		var t: float = float(STRIKE_TIME[String(UnitData.LOOKS[key].style)])
 		for s: Stickman in [_gold[i], _red[i]]:
 			s.player.playback_default_blend_time = 0.0  # no crossfade, so the frozen pose is the real strike pose
-			s.play("attack")
+			s.play("attack", 1.0, true)
 			s.player.seek(t, true)
 			s.player.pause()
 		var cx: float = (float(i) - 3.0) * DUEL_SPACING
