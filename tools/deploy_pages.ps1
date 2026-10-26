@@ -9,7 +9,9 @@ Get-ChildItem build/web -File | Where-Object { $_.Extension -ne ".import" } | Co
 Copy-Item tools/pages/CNAME, tools/pages/.nojekyll -Destination $tmp -Force   # CNAME must be in every deploy or the domain is lost
 Push-Location $tmp
 git add -A
-git commit -m "Web build" --quiet
+git -c user.name="cronustjy-sketch" -c user.email="cronustjy@gmail.com" commit -m "Web build" --quiet
+if ($LASTEXITCODE -ne 0) { Pop-Location; throw "git commit failed (nothing changed, or no identity)" }
 git push --quiet origin gh-pages
+if ($LASTEXITCODE -ne 0) { Pop-Location; throw "git push failed" }
 Pop-Location
 Write-Host "Published. Live at https://legion.cronuschores.xyz/"
