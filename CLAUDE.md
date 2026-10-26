@@ -76,6 +76,7 @@ The enemy fortress is shielded while the boss is alive.
   3. Test the real path a player takes (main menu → level select → battle), not just one scene.
   4. Commit with "Step N: <name>" and push. Add a line to `PROGRESS.md` saying what was done and how to test it.
 - If stuck on something for a long time, write it in PROGRESS.md, skip it, continue.
+- The story, characters, bosses, chapters and endings must follow `STORY.md`. If anything in the code or this file conflicts with it, STORY.md wins.
 - Don't touch `.godot/`. Commit `.import` files.
 
 ## Folder layout
