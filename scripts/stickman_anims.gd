@@ -5,7 +5,7 @@ extends RefCounted
 ## Sign cheat-sheet (model faces -Z): +X rotation swings a hanging limb forward; knees bend with -X;
 ## the arm/weapon pitch is shoulder + elbow + hand (85 = weapon upright, 0 = weapon pointing forward).
 
-const REST_HIPS: Vector3 = Vector3(0.0, 0.95, 0.0)
+const REST_HIPS: Vector3 = Vector3(0.0, 0.82, 0.0)
 
 const IDLE: Dictionary = {
 	"ShoulderR": Vector3(30, 0, 6), "ElbowR": Vector3(55, 0, 0), "HandR": Vector3.ZERO,
@@ -141,7 +141,7 @@ static func _attack(style: String) -> Animation:
 					"ShoulderL": Vector3(45, 0, -15), "ElbowL": Vector3(40, 0, 0), "Spine": Vector3(5, -22, 0),
 					"ThighL": Vector3(12, 0, -2), "ThighR": Vector3(-12, 0, 2), "Hips_pos": Vector3(0, -0.02, 0.02)})],
 				[0.34, _pose({"ShoulderR": Vector3(75, 0, 4), "ElbowR": Vector3(-5, 0, 0), "HandR": Vector3(-45, 0, 0),
-					"ShoulderL": Vector3(25, 0, -22), "ElbowL": Vector3(30, 0, 0), "Spine": Vector3(-14, 26, 0),
+					"ShoulderL": Vector3(50, 0, -22), "ElbowL": Vector3(35, 0, 0), "Spine": Vector3(-14, 26, 0),
 					"ThighL": Vector3(26, 0, -2), "KneeL": Vector3(-22, 0, 0), "ThighR": Vector3(-18, 0, 2), "KneeR": Vector3(-10, 0, 0),
 					"Hips_pos": Vector3(0, -0.07, -0.07)})],
 				[0.5, _pose({"ShoulderR": Vector3(70, 0, 4), "ElbowR": Vector3(-5, 0, 0), "HandR": Vector3(-40, 0, 0),
@@ -184,12 +184,12 @@ static func _die() -> Animation:
 		"Hips": Vector3(55, 0, 0), "Spine": Vector3(8, 0, 4), "Head": Vector3(-10, 0, 0),
 		"ShoulderL": Vector3(110, 0, -50), "ShoulderR": Vector3(95, 0, 55), "ElbowL": Vector3(10, 0, 0), "ElbowR": Vector3(10, 0, 0),
 		"ThighL": Vector3(20, 0, -8), "KneeL": Vector3(-50, 0, 0), "ThighR": Vector3(-10, 0, 8), "KneeR": Vector3(-30, 0, 0),
-		"Hips_pos": Vector3(0, -0.5, 0.25),
+		"Hips_pos": Vector3(0, -0.42, 0.25),
 	})
 	var lying: Dictionary = _pose({
 		"Hips": Vector3(88, 0, 0), "Spine": Vector3(0, 0, 3), "Head": Vector3(-8, 0, 6),
 		"ShoulderL": Vector3(20, 0, -55), "ShoulderR": Vector3(35, 0, 60), "ElbowL": Vector3(8, 0, 0), "ElbowR": Vector3(15, 0, 0),
 		"ThighL": Vector3(8, 0, -10), "KneeL": Vector3(-12, 0, 0), "ThighR": Vector3(-5, 0, 12), "KneeR": Vector3(-8, 0, 0),
-		"Hips_pos": Vector3(0, -0.83, 0.3),
+		"Hips_pos": Vector3(0, -0.67, 0.3),
 	})
 	return _make(1.1, false, [[0.0, _pose({})], [0.22, stagger], [0.6, fall], [1.0, lying], [1.1, lying]])
