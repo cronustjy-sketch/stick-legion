@@ -5,11 +5,18 @@ extends Node
 signal gold_changed(gold: int)
 signal pop_changed(used: int, cap: int)
 signal message(text: String)
+signal order_changed(order: int)
+
+enum Order { CHARGE, HOLD, FOLLOW, RETREAT }
+const ORDER_NAMES: Array[String] = ["Charge", "Hold", "Follow", "Retreat"]
 
 var battle: Battle
 var gold: float = EconomyData.START_GOLD
 var pop_used: int = 0
 var pop_cap: int = EconomyData.POP_CAP
+var order: Order = Order.CHARGE
+
+var _slot_counter: int = 0
 
 var _last_gold: int = -1
 
@@ -76,3 +83,18 @@ func _emit_gold(force: bool = false) -> void:
 	if force or g != _last_gold:
 		_last_gold = g
 		gold_changed.emit(g)
+
+
+func set_order(o: Order) -> void:
+	if o == order:
+		return
+	order = o
+	order_changed.emit(o)
+	message.emit("Order: " + ORDER_NAMES[o])
+	get_tree().call_group("units_team0", "refresh_orders")
+
+
+## Each player unit gets a stable slot number; formations (hold line, follow, retreat) are built from it.
+func next_slot() -> int:
+	_slot_counter += 1
+	return _slot_counter

@@ -79,6 +79,11 @@ func _physics_process(delta: float) -> void:
 	if mouse_gate and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		attack_pressed = false
 		block_held = false
+	if camera != null and camera.tactical:  # the hero stands still while you look at the battlefield
+		move_dir = Vector3.ZERO
+		attack_pressed = false
+		dodge_pressed = false
+		block_held = false
 	invincible = false
 	match state:
 		State.FREE:

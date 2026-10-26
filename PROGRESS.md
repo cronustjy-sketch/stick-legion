@@ -43,3 +43,8 @@
   Enemy fortress destroyed = VICTORY (unlocks next level, saved to `user://stick_legion.cfg`), your fortress destroyed or hero out of
   lives = DEFEAT; overlay with Next Level / Retry reloads the battle. HUD shows the level and a hero respawn countdown.
   Test: `godot --path . -- --level-test` (saves `screenshots/step6_*.png`, prints LEVEL-TEST results). Main menu / level select: step 10-11.
+- **Step 7: Orders, tactical view, health bars** — army orders on keys 1-4 and the "Army orders" panel: Charge (attack enemies, then march on the
+  enemy fortress), Hold (form a line in front of your fortress, only fight enemies that come close), Follow (formation behind the hero, fights
+  nearby enemies), Retreat (back to the gate, no fighting, heals 8% HP/s). New units obey the current order. Hold Tab for the tactical view: the camera
+  rises high over the field, units show big gold/red discs, the hero stands still. Every enemy now has a health bar over its head (allies show one once hurt).
+  Test: `godot --path . -- --orders-test` (prints ORDERS-TEST positions/healing, saves `screenshots/step7_*.png`).

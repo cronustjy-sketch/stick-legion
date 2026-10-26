@@ -10,6 +10,11 @@ static func ensure() -> void:
 	_key("move_right", KEY_D)
 	_key("sprint", KEY_SHIFT)
 	_key("dodge", KEY_SPACE)
+	_key("order_charge", KEY_1)
+	_key("order_hold", KEY_2)
+	_key("order_follow", KEY_3)
+	_key("order_retreat", KEY_4)
+	_key("tactical", KEY_TAB)
 	_mouse("attack", MOUSE_BUTTON_LEFT)
 	_mouse("block", MOUSE_BUTTON_RIGHT)
 

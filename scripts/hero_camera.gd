@@ -11,6 +11,8 @@ var distance: float = HeroData.CAMERA.distance
 var swallow_click: bool = false  # the click that grabs the mouse must not also swing the sword
 
 var camera: Camera3D
+var tactical: bool = false  # Tab held: high view of the whole fight
+var _tac_t: float = 0.0
 var _focus: Vector3 = Vector3.ZERO
 
 
@@ -57,4 +59,18 @@ func _process(delta: float) -> void:
 		pos.y = maxf(pos.y, terrain.height_at(pos.x, pos.z) + 0.6)
 	global_position = pos
 	# Aim at a point ahead of the hero so the hero sits left of centre (over-the-shoulder).
-	camera.global_transform = Transform3D(basis, pos).looking_at(pivot + forward * 6.0 + right * float(HeroData.CAMERA.shoulder), Vector3.UP)
+	var normal: Transform3D = Transform3D(basis, pos).looking_at(pivot + forward * 6.0 + right * float(HeroData.CAMERA.shoulder), Vector3.UP)
+	var want_tactical: bool = Input.is_action_pressed("tactical")
+	if want_tactical != tactical:
+		tactical = want_tactical
+		get_tree().call_group("all_units", "set_tactical", tactical)
+	_tac_t = move_toward(_tac_t, 1.0 if tactical else 0.0, delta * 2.2)
+	if _tac_t <= 0.0:
+		camera.global_transform = normal
+		camera.fov = 70.0
+	else:
+		var fz: float = clampf(target.global_position.z, -30.0, 38.0)
+		var high: Transform3D = Transform3D(Basis.IDENTITY, Vector3(0.0, 82.0, fz + 30.0)).looking_at(Vector3(0.0, 0.0, fz), Vector3.UP)
+		var k: float = smoothstep(0.0, 1.0, _tac_t)
+		camera.global_transform = normal.interpolate_with(high, k)
+		camera.fov = lerpf(70.0, 62.0, k)

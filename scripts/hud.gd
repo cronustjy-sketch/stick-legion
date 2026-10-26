@@ -9,6 +9,7 @@ const GOLD: Color = Color("e8b44a")
 const RED: Color = Color("de4b3f")
 const TEXT: Color = Color("f1ede2")
 const DIM: Color = Color("9a978d")
+const ORDER_ACTIONS: Array[String] = ["order_charge", "order_hold", "order_follow", "order_retreat"]
 
 var battle: Battle
 
@@ -25,6 +26,7 @@ var _toast: Label
 var _level_label: Label
 var _respawn_label: Label
 var _toast_tween: Tween
+var _order_buttons: Array[Button] = []
 var _buttons: Dictionary = {}  # unit key -> {"button": Button, "cost": Label}
 
 
@@ -38,6 +40,7 @@ func _ready() -> void:
 	_build_top_left(root)
 	_build_top_center(root)
 	_build_top_right(root)
+	_build_orders(root)
 	_build_bottom_left(root)
 	_build_spawn_bar(root)
 	_build_skills(root)
@@ -60,6 +63,8 @@ func _connect_signals() -> void:
 	battle.army.gold_changed.connect(_on_gold)
 	battle.army.pop_changed.connect(_on_pop)
 	battle.army.message.connect(show_toast)
+	battle.army.order_changed.connect(_on_order)
+	_on_order(battle.army.order)
 	battle.player_fortress.hp_changed.connect(func(c: float, m: float) -> void: _set_fort(_player_bar, _player_label, "Your Fortress", c, m))
 	battle.enemy_fortress.hp_changed.connect(func(c: float, m: float) -> void: _set_fort(_enemy_bar, _enemy_label, "Enemy Fortress", c, m))
 	battle.hero.hp_changed.connect(_on_hero_hp)
@@ -73,6 +78,10 @@ func _connect_signals() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	for i: int in ORDER_ACTIONS.size():
+		if event.is_action_pressed(ORDER_ACTIONS[i]):
+			battle.army.set_order(i as ArmyManager.Order)
+			return
 	if not (event is InputEventKey) or not event.is_pressed() or (event as InputEventKey).echo:
 		return
 	var k: InputEventKey = event
@@ -315,3 +324,36 @@ func _anchor(c: Control, ax: float, ay: float, margin: float) -> void:
 	c.offset_right = sx
 	c.offset_top = sy
 	c.offset_bottom = sy
+
+
+# --- Army orders --------------------------------------------------------------------------------------
+
+func _build_orders(root: Control) -> void:
+	var p: PanelContainer = _panel(root)
+	_anchor(p, 0.0, 0.0, 14.0)
+	p.offset_top += 100.0  # sits under the gold / army panel
+	p.offset_bottom += 100.0
+	var v: VBoxContainer = VBoxContainer.new()
+	v.add_theme_constant_override("separation", 5)
+	p.add_child(v)
+	v.add_child(_label("Army orders", 14, DIM))
+	for i: int in ArmyManager.ORDER_NAMES.size():
+		var b: Button = Button.new()
+		b.text = "%d  %s" % [i + 1, ArmyManager.ORDER_NAMES[i]]
+		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		b.focus_mode = Control.FOCUS_NONE
+		b.custom_minimum_size = Vector2(150, 34)
+		b.add_theme_font_size_override("font_size", 17)
+		b.pressed.connect(func() -> void: battle.army.set_order(i as ArmyManager.Order))
+		v.add_child(b)
+		_order_buttons.append(b)
+
+
+func _on_order(o: int) -> void:
+	for i: int in _order_buttons.size():
+		var active: bool = i == o
+		var b: Button = _order_buttons[i]
+		b.add_theme_stylebox_override("normal", _box(Color(0.35, 0.28, 0.1, 1.0) if active else Color(0.14, 0.15, 0.18, 0.95), GOLD if active else GOLD.darkened(0.55), 4, 6))
+		b.add_theme_stylebox_override("hover", _box(Color(0.3, 0.3, 0.36, 1.0), GOLD, 4, 6))
+		b.add_theme_stylebox_override("pressed", _box(Color(0.4, 0.32, 0.12, 1.0), GOLD, 4, 6))
+		b.add_theme_color_override("font_color", Color("ffe9a8") if active else TEXT)
