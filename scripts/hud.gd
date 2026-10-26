@@ -43,7 +43,7 @@ func _ready() -> void:
 	_toast.modulate.a = 0.0
 	_toast.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(_toast)
-	_toast.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM, Control.PRESET_MODE_MINSIZE, 190)
+	_anchor(_toast, 0.5, 1.0, 190.0)
 	_connect_signals()
 
 
@@ -120,7 +120,7 @@ func _on_lives(lives: int) -> void:
 
 func _build_top_left(root: Control) -> void:
 	var p: PanelContainer = _panel(root)
-	p.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT, Control.PRESET_MODE_MINSIZE, 14)
+	_anchor(p, 0.0, 0.0, 14.0)
 	var v: VBoxContainer = VBoxContainer.new()
 	p.add_child(v)
 	_gold_label = _label("Gold  0", 26, GOLD)
@@ -131,7 +131,7 @@ func _build_top_left(root: Control) -> void:
 
 func _build_top_center(root: Control) -> void:
 	var p: PanelContainer = _panel(root)
-	p.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP, Control.PRESET_MODE_MINSIZE, 14)
+	_anchor(p, 0.5, 0.0, 14.0)
 	var h: HBoxContainer = HBoxContainer.new()
 	h.add_theme_constant_override("separation", 22)
 	p.add_child(h)
@@ -151,18 +151,18 @@ func _build_top_center(root: Control) -> void:
 
 func _build_top_right(root: Control) -> void:
 	var p: PanelContainer = _panel(root)
-	p.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT, Control.PRESET_MODE_MINSIZE, 14)
+	_anchor(p, 1.0, 0.0, 14.0)
 	var l: Label = _label("WASD move   Shift sprint   Space roll\nLeft click attack   Right click block\nZ X C V B N M  spawn units\nEsc  free the mouse", 14, DIM)
 	p.add_child(l)
 
 
 func _build_bottom_left(root: Control) -> void:
 	var p: PanelContainer = _panel(root)
-	p.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT, Control.PRESET_MODE_MINSIZE, 14)
+	_anchor(p, 0.0, 1.0, 14.0)
 	var v: VBoxContainer = VBoxContainer.new()
 	p.add_child(v)
 	_hero_label = _label("Hero", 18, TEXT)
-	_hero_bar = _bar(Color("5fc46a"), Vector2(250, 18))
+	_hero_bar = _bar(Color("5fc46a"), Vector2(200, 18))
 	_lives_label = _label("Lives  3", 16, GOLD)
 	v.add_child(_hero_label)
 	v.add_child(_hero_bar)
@@ -171,7 +171,7 @@ func _build_bottom_left(root: Control) -> void:
 
 func _build_spawn_bar(root: Control) -> void:
 	var p: PanelContainer = _panel(root)
-	p.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM, Control.PRESET_MODE_MINSIZE, 14)
+	_anchor(p, 0.5, 1.0, 14.0)
 	var h: HBoxContainer = HBoxContainer.new()
 	h.add_theme_constant_override("separation", 8)
 	p.add_child(h)
@@ -183,7 +183,7 @@ func _build_spawn_bar(root: Control) -> void:
 func _spawn_button(key: String, hotkey: String) -> Button:
 	var s: Dictionary = UnitData.STATS[key]
 	var b: Button = Button.new()
-	b.custom_minimum_size = Vector2(98, 150)
+	b.custom_minimum_size = Vector2(82, 132)
 	b.focus_mode = Control.FOCUS_NONE
 	b.add_theme_stylebox_override("normal", _box(Color(0.14, 0.15, 0.18, 0.95), GOLD.darkened(0.4)))
 	b.add_theme_stylebox_override("hover", _box(Color(0.2, 0.21, 0.26, 0.98), GOLD))
@@ -195,12 +195,12 @@ func _spawn_button(key: String, hotkey: String) -> Button:
 	v.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 4)
 	var icon: TextureRect = TextureRect.new()
 	icon.texture = UnitIcons.make(self, key)
-	icon.custom_minimum_size = Vector2(90, 90)
+	icon.custom_minimum_size = Vector2(72, 72)
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	v.add_child(icon)
-	var name_l: Label = _label(String(s.name), 13, TEXT)
+	var name_l: Label = _label(String(s.name), 12, TEXT)
 	name_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	v.add_child(name_l)
@@ -220,22 +220,22 @@ func _spawn_button(key: String, hotkey: String) -> Button:
 
 func _build_skills(root: Control) -> void:
 	var p: PanelContainer = _panel(root)
-	p.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT, Control.PRESET_MODE_MINSIZE, 14)
+	_anchor(p, 1.0, 1.0, 14.0)
 	var v: VBoxContainer = VBoxContainer.new()
 	p.add_child(v)
 	var h: HBoxContainer = HBoxContainer.new()
 	h.add_theme_constant_override("separation", 8)
 	v.add_child(h)
 	for k: String in ["Q", "E", "R", "F"]:
-		h.add_child(_skill_slot(k, Vector2(62, 62)))
+		h.add_child(_skill_slot(k, Vector2(52, 52)))
 	var rage: HBoxContainer = HBoxContainer.new()
 	v.add_child(rage)
-	rage.add_child(_skill_slot("G", Vector2(62, 30)))
-	var rage_bar: ProgressBar = _bar(Color("b86bd6"), Vector2(190, 16))
+	rage.add_child(_skill_slot("G", Vector2(52, 28)))
+	var rage_bar: ProgressBar = _bar(Color("b86bd6"), Vector2(150, 16))
 	rage_bar.value = 0.0
 	rage_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	rage.add_child(rage_bar)
-	var note: Label = _label("Skills unlock in a later update", 12, DIM)
+	var note: Label = _label("Skills unlock later", 12, DIM)
 	v.add_child(note)
 
 
@@ -287,3 +287,20 @@ func _bar(fill: Color, min_size: Vector2) -> ProgressBar:
 	b.add_theme_stylebox_override("background", _box(Color(0.05, 0.05, 0.06, 0.95), Color(0, 0, 0, 1), 0, 4))
 	b.add_theme_stylebox_override("fill", _box(fill, fill.darkened(0.4), 0, 4))
 	return b
+
+
+## Pins a control to a screen corner/edge (ax: 0 left, 0.5 centre, 1 right; ay: 0 top, 1 bottom).
+## It grows away from that edge, so it always stays fully on screen whatever its size.
+func _anchor(c: Control, ax: float, ay: float, margin: float) -> void:
+	c.anchor_left = ax
+	c.anchor_right = ax
+	c.anchor_top = ay
+	c.anchor_bottom = ay
+	c.grow_horizontal = Control.GROW_DIRECTION_END if ax == 0.0 else (Control.GROW_DIRECTION_BEGIN if ax == 1.0 else Control.GROW_DIRECTION_BOTH)
+	c.grow_vertical = Control.GROW_DIRECTION_END if ay == 0.0 else Control.GROW_DIRECTION_BEGIN
+	var sx: float = margin if ax == 0.0 else (-margin if ax == 1.0 else 0.0)
+	var sy: float = margin if ay == 0.0 else -margin
+	c.offset_left = sx
+	c.offset_right = sx
+	c.offset_top = sy
+	c.offset_bottom = sy
