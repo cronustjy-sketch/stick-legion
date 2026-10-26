@@ -323,3 +323,10 @@ func is_alive() -> bool:
 
 func nearest_point(_from: Vector3) -> Vector3:
 	return global_position
+
+
+## Seconds until the hero is back on the field (0 when alive).
+func respawn_remaining() -> float:
+	if state != State.DEAD:
+		return 0.0
+	return maxf(float(HeroData.STATS.respawn_time) - _dead_t, 0.0)

@@ -11,10 +11,10 @@ var hero: Hero
 var hero_camera: HeroCamera
 var army: ArmyManager
 var hud: Hud
-var debug_auto_spawn: bool = true  # until the HUD (step 5) and enemy spawner (step 6) exist
+var level: int = 1
 var enemy_level: int = 1
-
-var _spawn_clock: float = 0.0
+var spawner: EnemySpawner
+var ended: bool = false
 
 var _clouds: Node3D
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
@@ -41,22 +41,28 @@ func _ready() -> void:
 	hud.name = "Hud"
 	hud.battle = self
 	add_child(hud)
-	if OS.get_cmdline_user_args().has("--hud-test"):
+	_setup_level()
+	var args: PackedStringArray = OS.get_cmdline_user_args()
+	if args.has("--hud-test"):
 		var ht: HudAutotest = HudAutotest.new()
 		ht.battle = self
 		add_child(ht)
-	if OS.get_cmdline_user_args().has("--battle-test"):
-		debug_auto_spawn = false
+	if args.has("--battle-test"):
+		spawner.enabled = false
 		var bt: BattleAutotest = BattleAutotest.new()
 		bt.battle = self
 		add_child(bt)
-	if OS.get_cmdline_user_args().has("--hero-test"):
-		debug_auto_spawn = false
+	if args.has("--hero-test"):
+		spawner.enabled = false
 		_spawn_dummies()  # only the scripted hero test uses punching bags
-	if OS.get_cmdline_user_args().has("--hero-test"):
 		var test: HeroAutotest = HeroAutotest.new()
 		test.battle = self
 		add_child(test)
+	if args.has("--level-test"):
+		spawner.enabled = false
+		var lt: LevelAutotest = LevelAutotest.new()
+		lt.battle = self
+		add_child(lt)
 	if OS.is_debug_build() and not OS.has_feature("web"):
 		get_tree().create_timer(SHOT_DELAY).timeout.connect(_save_screenshot)
 
@@ -76,13 +82,6 @@ func _build_environment() -> void:
 
 
 func _process(delta: float) -> void:
-	if debug_auto_spawn:
-		_spawn_clock += delta
-		if _spawn_clock >= 2.5:
-			_spawn_clock = 0.0
-			for team: int in [1]:  # enemy only; the player buys units with gold
-				if get_tree().get_nodes_in_group("units_team%d" % team).size() < 14:
-					spawn_unit("swordsman", team)
 	if _clouds != null:
 		_clouds.rotation.y += deg_to_rad(0.35) * delta
 
@@ -266,3 +265,44 @@ func spawn_unit(key: String, team: int, spread: float = 4.0) -> Unit:
 func spawn_wave(key: String, team: int, count: int) -> void:
 	for i: int in count:
 		spawn_unit(key, team, 6.0)
+
+
+# --- Level flow ---------------------------------------------------------------------------------------
+
+func _setup_level() -> void:
+	GameState.load_progress()
+	level = GameState.current_level
+	enemy_level = level
+	spawner = EnemySpawner.new()
+	spawner.name = "EnemySpawner"
+	spawner.setup(self, level)
+	add_child(spawner)
+	enemy_fortress.destroyed.connect(func(_t: int) -> void: _finish(true))
+	player_fortress.destroyed.connect(func(_t: int) -> void: _finish(false))
+	hero.out_of_lives.connect(func() -> void: _finish(false))
+
+
+func _finish(victory: bool) -> void:
+	if ended:
+		return
+	ended = true
+	if victory:
+		GameState.level_won(level)
+		_collapse(enemy_fortress)
+	else:
+		_collapse(player_fortress)
+	# Let the fortress fall for a moment before the result screen appears.
+	await get_tree().create_timer(1.6).timeout
+	var screen: EndScreen = EndScreen.new()
+	screen.name = "EndScreen"
+	screen.battle = self
+	add_child(screen)
+	screen.show_result(victory, level)
+
+
+func _collapse(f: Fortress) -> void:
+	if f.hp > 0.0:
+		return
+	var t: Tween = create_tween().set_parallel(true)
+	t.tween_property(f, "position:y", f.position.y - 4.0, 1.5).set_ease(Tween.EASE_IN)
+	t.tween_property(f, "rotation:z", 0.12, 1.5)

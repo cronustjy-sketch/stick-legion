@@ -22,6 +22,8 @@ var _hero_bar: ProgressBar
 var _hero_label: Label
 var _lives_label: Label
 var _toast: Label
+var _level_label: Label
+var _respawn_label: Label
 var _toast_tween: Tween
 var _buttons: Dictionary = {}  # unit key -> {"button": Button, "cost": Label}
 
@@ -44,6 +46,13 @@ func _ready() -> void:
 	_toast.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(_toast)
 	_anchor(_toast, 0.5, 1.0, 190.0)
+	_level_label = _label("Level %d" % battle.level, 22, TEXT)
+	root.add_child(_level_label)
+	_anchor(_level_label, 0.5, 0.0, 92.0)
+	_respawn_label = _label("", 34, RED)
+	_respawn_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(_respawn_label)
+	_anchor(_respawn_label, 0.5, 0.5, 0.0)
 	_connect_signals()
 
 
@@ -73,6 +82,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _process(_delta: float) -> void:
+	var wait: float = battle.hero.respawn_remaining()
+	_respawn_label.text = "Respawning in %d" % ceili(wait) if wait > 0.0 else ""
 	for key: String in _buttons:
 		var affordable: bool = battle.army.why_not(key) == ""
 		var b: Button = _buttons[key].button

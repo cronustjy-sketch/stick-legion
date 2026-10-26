@@ -38,3 +38,8 @@
   spawn buttons with rendered unit portraits (hotkeys Z X C V B N M, dimmed when unaffordable, toast "Not enough gold" / "Population full"),
   skill slots Q E R F + G rage bar (placeholders until step 9). Panels are pinned to screen corners so they never go off-screen.
   Mouse is captured while playing: Esc frees it so the buttons can be clicked. Test: `godot --path . -- --hud-test` (saves `screenshots/step5_*.png`).
+- **Step 6: Enemy spawner, win/lose, levels** — `scripts/enemy_spawner.gd` (enemy earns gold, buys cheap-weighted units from the level pool
+  up to its pop cap; rules in `data/levels.gd`: swordsman L1, +spearman L2, +archer L3, +shield knight L4, ...; strength x(1+0.11(L-1))).
+  Enemy fortress destroyed = VICTORY (unlocks next level, saved to `user://stick_legion.cfg`), your fortress destroyed or hero out of
+  lives = DEFEAT; overlay with Next Level / Retry reloads the battle. HUD shows the level and a hero respawn countdown.
+  Test: `godot --path . -- --level-test` (saves `screenshots/step6_*.png`, prints LEVEL-TEST results). Main menu / level select: step 10-11.
