@@ -116,3 +116,4 @@
   inside the walls). The controls panel shows for the first 10 s of level 1 only; a "?" button (top right) toggles it. Fight feel: sparks, bigger hero-hit screen shake, damage numbers (already in), and
   units are thrown back with a small hop when they die. Boot splash, web loading screen and favicon: gold "STICK LEGION" + a low-poly stickman with a gold banner (`ui/splash_art.svg`, `tools/make_splash.gd`
   -> `ui/splash.png`, `icon.svg`; the loading bar is gold, styled via the Web preset's head include). Tests: `battle.tscn -- --start-test`, `-- --look-test` (screenshots of Aldric from behind/side/front).
+- **Custom domain** legion.cronuschores.xyz: `CNAME` is on the gh-pages branch and is re-added by every deploy (`tools/deploy_pages.ps1`, source file `tools/pages/CNAME`).

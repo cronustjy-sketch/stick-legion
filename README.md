@@ -35,7 +35,7 @@ Open the project in Godot 4.7.2 and press F5 (starts on the main menu), or:
 3. Test it locally: `powershell -ExecutionPolicy Bypass -File tools/serve_web.ps1`, then open <http://localhost:8080>.
 4. Upload the contents of `build/web/` to any static host (itch.io "HTML5" project, GitHub Pages, Cloudflare Pages, ...).
 
-The public copy lives on the `gh-pages` branch (GitHub Pages). To update it after a new export, copy the files of `build/web/` into a checkout of that branch (plus an empty `.nojekyll` file), commit and push.
+The public copy lives on the `gh-pages` branch (GitHub Pages, custom domain <https://legion.cronuschores.xyz/>). Deploy with `powershell -ExecutionPolicy Bypass -File tools/deploy_pages.ps1` after exporting: it replaces the branch contents with `build/web/` and always re-adds the `CNAME` file (kept in `tools/pages/`) and `.nojekyll`, so the domain survives.
 
 ## Sound
 
