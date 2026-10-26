@@ -41,3 +41,24 @@ const CAMERA: Dictionary = {
 	"mouse_sensitivity": 0.0028,
 	"zoom_step": 0.6,
 }
+
+## Rage fills when the hero deals or takes damage; the ultimate (G) needs a full meter.
+const RAGE: Dictionary = {"max": 100.0, "per_damage_dealt": 0.22, "per_damage_taken": 0.3}
+
+## Hero skills. "hits" are times (s) into the animation when the effect lands.
+## damage / radius / knockback: area around the hero (shifted `forward` metres ahead).
+## dash: hero charges forward at that speed until `dash_time` (invincible until `invincible`).
+## heal_self / heal_allies / heal_radius, buff (army damage multiplier) + buff_time.
+const SKILLS: Dictionary = {
+	"q": {"name": "Whirlwind", "action": "skill_q", "cooldown": 6.0, "anim": "spin", "length": 0.8, "hits": [0.2, 0.4, 0.6],
+		"damage": 16.0, "radius": 3.6, "knockback": 1.2, "shake": 0.05},
+	"e": {"name": "Shield Dash", "action": "skill_e", "cooldown": 8.0, "anim": "dash", "length": 0.55, "hits": [0.3],
+		"damage": 28.0, "radius": 2.6, "knockback": 4.5, "forward": 1.2, "dash": 16.0, "dash_time": 0.3, "invincible": 0.4, "shake": 0.12},
+	"r": {"name": "War Cry", "action": "skill_r", "cooldown": 20.0, "anim": "cry", "length": 1.0, "hits": [0.35],
+		"heal_self": 30.0, "heal_allies": 35.0, "heal_radius": 16.0, "buff": 1.35, "buff_time": 8.0, "shake": 0.06, "ring": 16.0},
+	"f": {"name": "Ground Slam", "action": "skill_f", "cooldown": 12.0, "anim": "slam", "length": 0.95, "hits": [0.5],
+		"damage": 50.0, "radius": 5.0, "knockback": 4.5, "forward": 1.6, "shake": 0.3},
+	"g": {"name": "Legion Wrath", "action": "skill_g", "cooldown": 0.0, "anim": "ultimate", "length": 1.5, "hits": [0.85],
+		"damage": 140.0, "radius": 10.0, "knockback": 7.0, "heal_allies": 40.0, "heal_radius": 18.0, "buff": 1.4, "buff_time": 10.0,
+		"shake": 0.55, "ring": 10.0, "ultimate": true},
+}

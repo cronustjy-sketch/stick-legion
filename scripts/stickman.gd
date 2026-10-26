@@ -353,3 +353,13 @@ func _weapon(m: RigMesh, kind: String, bone: String, hand: Vector3, side: float)
 				prev = p
 			m.cyl(bone, Vector3(0, -0.62, 0), Vector3(0, 0.62, 0), 0.008, 0.008, C_WHITE, 3)
 	m.frame = Transform3D.IDENTITY
+
+
+## World positions of the main-hand weapon: [tip, base] (used for the sword trail).
+func weapon_world_points() -> Array[Vector3]:
+	var i: int = skeleton.find_bone("HandR")
+	var m: Transform3D = skeleton.get_bone_global_pose(i) * skeleton.get_bone_global_rest(i).affine_inverse()
+	var f: Transform3D = _frame_held(HAND_R)
+	var tip: Vector3 = skeleton.global_transform * (m * (f * Vector3(0.0, 1.0, 0.0)))
+	var base: Vector3 = skeleton.global_transform * (m * (f * Vector3(0.0, 0.2, 0.0)))
+	return [tip, base]

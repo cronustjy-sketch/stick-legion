@@ -13,6 +13,9 @@ var swallow_click: bool = false  # the click that grabs the mouse must not also 
 var camera: Camera3D
 var tactical: bool = false  # Tab held: high view of the whole fight
 var _tac_t: float = 0.0
+var _shake_amp: float = 0.0
+var _shake_time: float = 0.0
+var _shake_total: float = 0.01
 var _focus: Vector3 = Vector3.ZERO
 
 
@@ -46,6 +49,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 
+## Screen shake: `amount` is roughly metres of camera offset at the start, fading out over `time` seconds.
+func shake(amount: float, time: float = 0.25) -> void:
+	if amount >= _shake_amp * (_shake_time / _shake_total):
+		_shake_amp = amount
+		_shake_time = time
+		_shake_total = maxf(time, 0.01)
+
+
 func _process(delta: float) -> void:
 	if target == null:
 		return
@@ -74,3 +85,11 @@ func _process(delta: float) -> void:
 		var k: float = smoothstep(0.0, 1.0, _tac_t)
 		camera.global_transform = normal.interpolate_with(high, k)
 		camera.fov = lerpf(70.0, 62.0, k)
+	if _shake_time > 0.0:
+		_shake_time -= delta
+		var f: float = clampf(_shake_time / _shake_total, 0.0, 1.0)
+		camera.h_offset = randf_range(-1.0, 1.0) * _shake_amp * f
+		camera.v_offset = randf_range(-1.0, 1.0) * _shake_amp * f
+	else:
+		camera.h_offset = 0.0
+		camera.v_offset = 0.0

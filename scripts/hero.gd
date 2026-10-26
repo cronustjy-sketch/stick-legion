@@ -9,7 +9,7 @@ signal died
 signal out_of_lives
 signal struck(hit_count: int, combo_index: int)
 
-enum State { FREE, ATTACK, ROLL, BLOCK, DEAD }
+enum State { FREE, ATTACK, ROLL, BLOCK, SKILL, DEAD }
 
 var terrain: Terrain
 var camera: HeroCamera
@@ -21,6 +21,9 @@ var lives: int = int(HeroData.STATS.lives)
 var state: State = State.FREE
 var invincible: bool = false
 var model: Stickman
+var battle: Battle
+var skills: HeroSkills
+var trail: WeaponTrail
 
 var _face_yaw: float = 0.0
 var _combo: int = 0
@@ -52,11 +55,23 @@ func _ready() -> void:
 	model.name = "Model"
 	model.setup("hero", 0)
 	add_child(model)
+	skills = HeroSkills.new()
+	skills.name = "Skills"
+	skills.hero = self
+	add_child(skills)
+	trail = WeaponTrail.new()
+	trail.name = "Trail"
+	trail.setup(model)
+	add_child(trail)
 	spawn_position = global_position
 
 
 func forward_vector() -> Vector3:
 	return Vector3(-sin(rotation.y), 0.0, -cos(rotation.y))
+
+
+func _process(_delta: float) -> void:
+	trail.active = state == State.ATTACK or (state == State.SKILL and skills.active in ["q", "f", "g"])
 
 
 func _physics_process(delta: float) -> void:
@@ -85,6 +100,9 @@ func _physics_process(delta: float) -> void:
 		dodge_pressed = false
 		block_held = false
 	invincible = false
+	var can_skill: bool = state == State.FREE or state == State.BLOCK or (state == State.ATTACK and _struck)
+	if can_skill and _stun <= 0.0 and not (camera != null and camera.tactical):
+		skills.poll(move_dir)
 	match state:
 		State.FREE:
 			_combo_timer -= delta
@@ -97,6 +115,8 @@ func _physics_process(delta: float) -> void:
 			_state_attack(delta, move_dir, attack_pressed, dodge_pressed)
 		State.ROLL:
 			_state_roll(delta)
+		State.SKILL:
+			skills.update(delta)
 	move_and_slide()
 	_snap_to_ground()
 
@@ -152,7 +172,7 @@ func _start_attack() -> void:
 	_struck = false
 	_queued = false
 	var swing: Dictionary = HeroData.COMBO[_combo]
-	_assist_aim()
+	assist_aim()
 	model.play(StringName(swing.anim), float(HeroData.STATS.attack_speed), true)
 
 
@@ -224,7 +244,10 @@ func _strike(damage: float) -> void:
 		if to.length() > 0.6 and fwd.dot(to.normalized()) < arc_cos:
 			continue
 		n.call("take_damage", damage, global_position)
+		skills.add_rage(damage * float(HeroData.RAGE.per_damage_dealt))
 		hits += 1
+	if hits > 0 and battle != null:
+		battle.fx.shake(0.04 + 0.05 * float(_combo), 0.18)
 	struck.emit(hits, _combo)
 
 
@@ -241,6 +264,11 @@ func take_damage(amount: float, from_pos: Vector3) -> bool:
 			dealt *= 1.0 - float(HeroData.STATS.block_reduction)
 	hp = maxf(hp - dealt, 0.0)
 	hp_changed.emit(hp, max_hp)
+	skills.add_rage(dealt * float(HeroData.RAGE.per_damage_taken))
+	if battle != null:
+		battle.fx.number(global_position + Vector3(0.0, 2.3, 0.0), dealt, "hurt")
+		battle.fx.sparks(global_position + Vector3(0.0, 1.2, 0.0), Color("ff5a4a"), 6)
+		battle.fx.shake(0.09, 0.22)
 	if hp <= 0.0:
 		_die()
 	elif state != State.BLOCK and state != State.ROLL:
@@ -300,7 +328,7 @@ func _nearest_enemy_dist() -> float:
 
 
 ## Light aim assist: swings turn towards the closest enemy in front of the hero.
-func _assist_aim() -> void:
+func assist_aim() -> void:
 	var fwd: Vector3 = forward_vector()
 	var best: float = 4.5
 	var best_dir: Vector3 = Vector3.ZERO

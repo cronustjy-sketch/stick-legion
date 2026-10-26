@@ -10,6 +10,7 @@ var enemy_fortress: Fortress
 var hero: Hero
 var hero_camera: HeroCamera
 var army: ArmyManager
+var fx: Effects
 var hud: Hud
 var level: int = 1
 var enemy_level: int = 1
@@ -32,6 +33,10 @@ func _ready() -> void:
 	_scatter_props()
 	player_fortress = _make_fortress(Fortress.Team.PLAYER, BattlefieldData.FORTRESS_Z, 0.0)
 	enemy_fortress = _make_fortress(Fortress.Team.ENEMY, -BattlefieldData.FORTRESS_Z, PI)
+	fx = Effects.new()
+	fx.name = "Effects"
+	fx.battle = self
+	add_child(fx)
 	_spawn_hero()
 	army = ArmyManager.new()
 	army.name = "Army"
@@ -63,6 +68,11 @@ func _ready() -> void:
 		var ut: UnitsAutotest = UnitsAutotest.new()
 		ut.battle = self
 		add_child(ut)
+	if args.has("--skills-test"):
+		spawner.enabled = false
+		var st: SkillsAutotest = SkillsAutotest.new()
+		st.battle = self
+		add_child(st)
 	if args.has("--orders-test"):
 		spawner.enabled = false
 		var ot: OrdersAutotest = OrdersAutotest.new()
@@ -235,6 +245,7 @@ func _spawn_hero() -> void:
 	hero = Hero.new()
 	hero.name = "Hero"
 	hero.terrain = terrain
+	hero.battle = self
 	var z: float = BattlefieldData.FORTRESS_Z - 10.0
 	hero.position = Vector3(0.0, terrain.height_at(0.0, z), z)
 	add_child(hero)

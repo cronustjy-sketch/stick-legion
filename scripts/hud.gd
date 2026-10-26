@@ -23,6 +23,9 @@ var _hero_bar: ProgressBar
 var _hero_label: Label
 var _lives_label: Label
 var _toast: Label
+var _skill_slots: Dictionary = {}
+var _rage_bar: ProgressBar
+var _rage_label: Label
 var _level_label: Label
 var _respawn_label: Label
 var _toast_tween: Tween
@@ -91,6 +94,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _process(_delta: float) -> void:
+	_update_skills()
 	var wait: float = battle.hero.respawn_remaining()
 	_respawn_label.text = "Respawning in %d" % ceili(wait) if wait > 0.0 else ""
 	for key: String in _buttons:
@@ -203,7 +207,7 @@ func _build_spawn_bar(root: Control) -> void:
 func _spawn_button(key: String, hotkey: String) -> Button:
 	var s: Dictionary = UnitData.STATS[key]
 	var b: Button = Button.new()
-	b.custom_minimum_size = Vector2(64, 132)
+	b.custom_minimum_size = Vector2(62, 132)
 	b.focus_mode = Control.FOCUS_NONE
 	b.add_theme_stylebox_override("normal", _box(Color(0.14, 0.15, 0.18, 0.95), GOLD.darkened(0.4)))
 	b.add_theme_stylebox_override("hover", _box(Color(0.2, 0.21, 0.26, 0.98), GOLD))
@@ -246,32 +250,81 @@ func _build_skills(root: Control) -> void:
 	var p: PanelContainer = _panel(root)
 	_anchor(p, 1.0, 1.0, 14.0)
 	var v: VBoxContainer = VBoxContainer.new()
+	v.add_theme_constant_override("separation", 6)
 	p.add_child(v)
 	var h: HBoxContainer = HBoxContainer.new()
 	h.add_theme_constant_override("separation", 8)
 	v.add_child(h)
-	for k: String in ["Q", "E", "R", "F"]:
-		h.add_child(_skill_slot(k, Vector2(52, 52)))
+	for id: String in ["q", "e", "r", "f"]:
+		h.add_child(_skill_slot(id, Vector2(56, 66)))
 	var rage: HBoxContainer = HBoxContainer.new()
+	rage.add_theme_constant_override("separation", 8)
 	v.add_child(rage)
-	rage.add_child(_skill_slot("G", Vector2(52, 28)))
-	var rage_bar: ProgressBar = _bar(Color("b86bd6"), Vector2(150, 16))
-	rage_bar.value = 0.0
-	rage_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	rage.add_child(rage_bar)
-	var note: Label = _label("Skills unlock later", 12, DIM)
-	v.add_child(note)
+	rage.add_child(_skill_slot("g", Vector2(56, 66)))
+	var col: VBoxContainer = VBoxContainer.new()
+	col.alignment = BoxContainer.ALIGNMENT_CENTER
+	rage.add_child(col)
+	_rage_label = _label("Rage 0%", 14, Color("c996e8"))
+	col.add_child(_rage_label)
+	_rage_bar = _bar(Color("b86bd6"), Vector2(150, 16))
+	_rage_bar.max_value = 100.0
+	col.add_child(_rage_bar)
 
 
-func _skill_slot(key: String, size: Vector2) -> Control:
-	var c: PanelContainer = PanelContainer.new()
+## One skill button: key letter, skill name, and a dark cooldown cover that shrinks as it recharges.
+func _skill_slot(id: String, size: Vector2) -> Control:
+	var def: Dictionary = HeroData.SKILLS[id]
+	var c: Control = Control.new()
 	c.custom_minimum_size = size
-	c.add_theme_stylebox_override("panel", _box(Color(0.12, 0.12, 0.15, 0.9), DIM.darkened(0.3)))
-	var l: Label = _label(key, 24, DIM)
-	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	c.add_child(l)
+	var bg: Panel = Panel.new()
+	bg.add_theme_stylebox_override("panel", _box(Color(0.12, 0.12, 0.15, 0.92), DIM.darkened(0.3), 0, 8))
+	c.add_child(bg)
+	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var key_l: Label = _label(id.to_upper(), 26, TEXT)
+	key_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	c.add_child(key_l)
+	key_l.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+	key_l.offset_top = 4.0
+	var name_l: Label = _label(String(def.name), 10, DIM)
+	name_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	c.add_child(name_l)
+	name_l.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	name_l.offset_top = -18.0
+	var cover: ColorRect = ColorRect.new()
+	cover.color = Color(0, 0, 0, 0.62)
+	cover.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	c.add_child(cover)
+	var cd_l: Label = _label("", 20, TEXT)
+	cd_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	cd_l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	cd_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	c.add_child(cd_l)
+	cd_l.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_skill_slots[id] = {"root": c, "bg": bg, "key": key_l, "cover": cover, "cd": cd_l, "size": size}
 	return c
+
+
+func _update_skills() -> void:
+	var sk: HeroSkills = battle.hero.skills
+	for id: String in _skill_slots:
+		var s: Dictionary = _skill_slots[id]
+		var size: Vector2 = s.size
+		var ready: bool = sk.is_ready(id)
+		var frac: float = sk.cooldown_fraction(id)
+		var cover: ColorRect = s.cover
+		var cd_l: Label = s.cd
+		var bg: Panel = s.bg
+		var key_l: Label = s.key
+		if id == "g":
+			cover.size = Vector2.ZERO if ready else size
+			cd_l.text = "" if ready else "%d%%" % int(100.0 * sk.rage / sk.rage_max())
+		else:
+			cover.size = Vector2(size.x, size.y * frac)
+			cd_l.text = "" if ready else "%.1f" % sk.cooldown_left(id)
+		bg.add_theme_stylebox_override("panel", _box(Color(0.3, 0.25, 0.1, 0.95) if ready else Color(0.12, 0.12, 0.15, 0.92), GOLD if ready else DIM.darkened(0.3), 0, 8))
+		key_l.add_theme_color_override("font_color", Color("ffe9a8") if ready else DIM)
+	_rage_bar.value = sk.rage
+	_rage_label.text = "Rage %d%%  %s" % [int(100.0 * sk.rage / sk.rage_max()), "READY (G)" if sk.rage >= sk.rage_max() else ""]
 
 
 # --- Widgets ------------------------------------------------------------------------------------------

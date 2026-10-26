@@ -63,6 +63,7 @@ var _goal: Vector3 = Vector3.ZERO
 var _has_goal: bool = false
 var _run_dist: float = 99.0  # distance travelled since the last attack (cavalry charge)
 var _hp_bar: HpBar3D
+var _bar_height: float = 2.5
 var _marker: MeshInstance3D
 
 
@@ -125,8 +126,10 @@ func nearest_point(_from: Vector3) -> Vector3:
 func take_damage(amount: float, from_pos: Vector3 = Vector3.ZERO) -> void:
 	if state == State.DEAD:
 		return
-	hp -= amount * (1.0 - armor)
+	var dealt: float = amount * (1.0 - armor)
+	hp -= dealt
 	_update_hp_bar()
+	_hit_fx(dealt)
 	if hp <= 0.0:
 		_die()
 		return
@@ -140,8 +143,11 @@ func take_damage(amount: float, from_pos: Vector3 = Vector3.ZERO) -> void:
 func heal(amount: float) -> void:
 	if state == State.DEAD:
 		return
+	var before: float = hp
 	hp = minf(hp + amount, max_hp)
 	_update_hp_bar()
+	if hp > before:
+		battle.fx.number(global_position + Vector3(0.0, _bar_height + 0.4, 0.0), hp - before, "heal")
 
 
 func _die() -> void:
@@ -223,6 +229,8 @@ func damage_against(t: Node) -> float:
 		d *= fortress_mult
 	if charge_mult > 1.0 and _run_dist >= 6.0:
 		d *= charge_mult
+	if team == 0:
+		d *= battle.army.damage_buff()
 	return d
 
 
@@ -492,6 +500,7 @@ func _heal_while_retreating(delta: float) -> void:
 # --- Health bar above the head + tactical marker ---------------------------------------------------------
 
 func _make_hp_bar(height: float) -> void:
+	_bar_height = height
 	_hp_bar = HpBar3D.new()
 	_hp_bar.name = "HpBar"
 	_hp_bar.setup(Vector2(1.15, 0.15) * maxf(1.0, height / 2.8), BattlefieldData.COLOR_RED if team == 1 else BattlefieldData.COLOR_GOLD)
@@ -528,3 +537,27 @@ func _make_marker() -> void:
 func set_tactical(on: bool) -> void:
 	if state != State.DEAD:
 		_marker.visible = on
+
+
+# --- Hit feedback -------------------------------------------------------------------------------------------
+
+## Sparks on every hit; damage numbers for hits on enemies (friends would be too noisy).
+func _hit_fx(dealt: float) -> void:
+	var col: Color = Color("ffd24a") if team == 1 else Color("ff8a6a")
+	battle.fx.sparks(global_position + Vector3(0.0, 1.1 * float(UnitData.LOOKS[key].scale), 0.0), col, 6)
+	if team == 1:
+		battle.fx.number(global_position + Vector3(0.0, _bar_height + 0.3, 0.0), dealt, "heavy" if dealt >= 30.0 else "hit")
+
+
+## Shoves the unit away from `from` (hero skills, giant smash). Big units are too heavy to move.
+func knock_away(from: Vector3, distance: float) -> void:
+	if state == State.DEAD or is_big or distance <= 0.0:
+		return
+	var away: Vector3 = global_position - from
+	away.y = 0.0
+	if away.length() < 0.01:
+		away = Vector3.FORWARD
+	var p: Vector3 = global_position + away.normalized() * distance
+	p.y = battle.terrain.height_at(p.x, p.z)
+	var tw: Tween = create_tween()
+	tw.tween_property(self, "global_position", p, 0.25).set_ease(Tween.EASE_OUT)

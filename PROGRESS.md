@@ -54,3 +54,9 @@
   Specials are driven by keys in `data/units.gd`; projectiles in `scripts/projectile.gd`; visuals via `VisualFactory` (stickman rig, `cavalry_model.gd`, `catapult_model.gd`).
   HUD has all 10 spawn buttons (Z X C V B N M , . /); enemy levels bring cavalry (L5), giant (L7), catapult (L9).
   Test: `godot --path . -- --units-test` (prints UNITS-TEST results, saves `screenshots/step8_*.png`).
+- **Step 9: Hero skills + hit effects** — Q Whirlwind (3 spins, 3.6 m), E Shield Dash (invincible charge + knockback), R War Cry (heals hero + nearby army,
+  army damage +35% for 8 s), F Ground Slam (5 m area + knockback), G Legion Wrath (full rage meter: 10 m blast, heals army, +40% damage for 10 s).
+  Rage fills when the hero deals/takes damage. All values in `data/hero.gd` (SKILLS, RAGE). HUD skill slots show key, name and a cooldown cover; rage bar beside G.
+  Effects (`scripts/effects.gd`): spark bursts on hits, floating damage numbers (white hits, gold heavy, red when the hero is hurt, green heals), expanding rings
+  for area skills, camera shake (`HeroCamera.shake`), and a fading sword trail (`scripts/weapon_trail.gd`).
+  Test: `godot --path . -- --skills-test` (prints SKILLS-TEST results, saves `screenshots/step9_*.png`).

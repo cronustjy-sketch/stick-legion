@@ -15,6 +15,11 @@ static func ensure() -> void:
 	_key("order_follow", KEY_3)
 	_key("order_retreat", KEY_4)
 	_key("tactical", KEY_TAB)
+	_key("skill_q", KEY_Q)
+	_key("skill_e", KEY_E)
+	_key("skill_r", KEY_R)
+	_key("skill_f", KEY_F)
+	_key("skill_g", KEY_G)
 	_mouse("attack", MOUSE_BUTTON_LEFT)
 	_mouse("block", MOUSE_BUTTON_RIGHT)
 

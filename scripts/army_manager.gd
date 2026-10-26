@@ -27,6 +27,7 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	_buff_left = maxf(_buff_left - delta, 0.0)
 	gold += EconomyData.INCOME_PER_SECOND * delta
 	_emit_gold()
 
@@ -98,3 +99,17 @@ func set_order(o: Order) -> void:
 func next_slot() -> int:
 	_slot_counter += 1
 	return _slot_counter
+
+
+## Temporary damage boost for the whole army (hero skills War Cry and Legion Wrath).
+var _buff_mult: float = 1.0
+var _buff_left: float = 0.0
+
+
+func apply_buff(mult: float, seconds: float) -> void:
+	_buff_mult = maxf(mult, 1.0)
+	_buff_left = seconds
+
+
+func damage_buff() -> float:
+	return _buff_mult if _buff_left > 0.0 else 1.0

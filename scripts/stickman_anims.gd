@@ -34,6 +34,11 @@ static func library(style: String) -> AnimationLibrary:
 	lib.add_animation("attack2", _attack_slash())
 	lib.add_animation("attack3", _attack_slam())
 	lib.add_animation("roll", _roll())
+	lib.add_animation("spin", _skill_spin())
+	lib.add_animation("dash", _skill_dash())
+	lib.add_animation("cry", _skill_cry())
+	lib.add_animation("slam", _skill_slam())
+	lib.add_animation("ultimate", _skill_ultimate())
 	lib.add_animation("block", _block())
 	lib.add_animation("hit", _hit())
 	lib.add_animation("die", _die())
@@ -285,3 +290,62 @@ static func _ride_library() -> AnimationLibrary:
 	lib.add_animation("attack3", _make(0.9, false, [[0.0, _seated()], [0.9, _seated()]]))
 	lib.add_animation("roll", _make(0.5, false, [[0.0, _seated()], [0.5, _seated()]]))
 	return lib
+
+
+# --- Hero skills ----------------------------------------------------------------------------------------
+
+## Whirlwind: two full turns with the sword held out to the side.
+static func _skill_spin() -> Animation:
+	var arms: Dictionary = {"ShoulderR": Vector3(88, 0, 75), "ElbowR": Vector3(0, 0, 0), "HandR": Vector3(-80, 0, 0),
+		"ShoulderL": Vector3(60, 0, -60), "ElbowL": Vector3(30, 0, 0), "Spine": Vector3(-8, 0, 0),
+		"ThighL": Vector3(14, 0, -12), "ThighR": Vector3(-14, 0, 12), "KneeL": Vector3(-20, 0, 0), "KneeR": Vector3(-20, 0, 0),
+		"Hips_pos": Vector3(0, -0.08, 0)}
+	var keys: Array = [[0.0, _pose({})]]
+	for i: int in 9:
+		var p: Dictionary = arms.duplicate()
+		p["Hips"] = Vector3(0, -80.0 * float(i + 1), 0)
+		keys.append([0.07 + float(i) * 0.08, _pose(p)])
+	keys.append([0.9, _pose({})])
+	return _make(0.9, false, keys)
+
+
+## Shield Dash: lean into a charge with the shield out front.
+static func _skill_dash() -> Animation:
+	var dash: Dictionary = {"Spine": Vector3(-30, 0, 0), "Head": Vector3(18, 0, 0),
+		"ShoulderR": Vector3(90, 0, 6), "ElbowR": Vector3(0, 0, 0), "HandR": Vector3(-85, 0, 0),
+		"ShoulderL": Vector3(92, 0, -6), "ElbowL": Vector3(0, 0, 0), "HandL": Vector3(-8, 0, 0),
+		"ThighL": Vector3(48, 0, -3), "KneeL": Vector3(-30, 0, 0), "ThighR": Vector3(-42, 0, 3), "KneeR": Vector3(-50, 0, 0),
+		"Hips_pos": Vector3(0, -0.12, -0.1)}
+	return _make(0.55, false, [[0.0, _pose({})], [0.08, _pose(dash)], [0.34, _pose(dash)], [0.55, _pose({})]])
+
+
+## War Cry: arms thrown up, head back.
+static func _skill_cry() -> Animation:
+	var cry: Dictionary = {"ShoulderR": Vector3(165, 0, 14), "ElbowR": Vector3(10, 0, 0), "HandR": Vector3(0, 0, 0),
+		"ShoulderL": Vector3(150, 0, -16), "ElbowL": Vector3(15, 0, 0), "Spine": Vector3(12, 0, 0), "Head": Vector3(-22, 0, 0),
+		"ThighL": Vector3(6, 0, -8), "ThighR": Vector3(-6, 0, 8), "Hips_pos": Vector3(0, 0.02, 0)}
+	return _make(1.0, false, [[0.0, _pose({})], [0.3, _pose(cry)], [0.7, _pose(cry)], [1.0, _pose({})]])
+
+
+## Ground Slam: crouch and drive the sword into the ground.
+static func _skill_slam() -> Animation:
+	var wind: Dictionary = {"ShoulderR": Vector3(170, 0, 4), "ElbowR": Vector3(15, 0, 0), "HandR": Vector3(-10, 0, 0),
+		"ShoulderL": Vector3(110, 0, -20), "ElbowL": Vector3(30, 0, 0), "Spine": Vector3(18, 0, 0),
+		"Hips_pos": Vector3(0, 0.0, 0.05)}
+	var hit: Dictionary = {"ShoulderR": Vector3(78, 0, 4), "ElbowR": Vector3(-5, 0, 0), "HandR": Vector3(-50, 0, 0),
+		"ShoulderL": Vector3(60, 0, -16), "ElbowL": Vector3(30, 0, 0), "Spine": Vector3(-32, 0, 0), "Head": Vector3(16, 0, 0),
+		"ThighL": Vector3(50, 0, -6), "KneeL": Vector3(-60, 0, 0), "ThighR": Vector3(-20, 0, 6), "KneeR": Vector3(-50, 0, 0),
+		"Hips_pos": Vector3(0, -0.28, -0.12)}
+	return _make(0.95, false, [[0.0, _pose({})], [0.32, _pose(wind)], [0.5, _pose(hit)], [0.75, _pose(hit)], [0.95, _pose({})]])
+
+
+## Legion Wrath: sword raised to the sky, then a huge two-handed strike.
+static func _skill_ultimate() -> Animation:
+	var raise: Dictionary = {"ShoulderR": Vector3(172, 0, 10), "ElbowR": Vector3(8, 0, 0), "HandR": Vector3(0, 0, 0),
+		"ShoulderL": Vector3(150, 0, -14), "ElbowL": Vector3(15, 0, 0), "Spine": Vector3(16, 0, 0), "Head": Vector3(-24, 0, 0),
+		"ThighL": Vector3(8, 0, -8), "ThighR": Vector3(-8, 0, 8), "Hips_pos": Vector3(0, 0.04, 0)}
+	var smash: Dictionary = {"ShoulderR": Vector3(70, 0, 2), "ElbowR": Vector3(-8, 0, 0), "HandR": Vector3(-45, 0, 0),
+		"ShoulderL": Vector3(60, 0, -14), "ElbowL": Vector3(25, 0, 0), "Spine": Vector3(-36, 0, 0), "Head": Vector3(18, 0, 0),
+		"ThighL": Vector3(56, 0, -8), "KneeL": Vector3(-70, 0, 0), "ThighR": Vector3(-24, 0, 8), "KneeR": Vector3(-60, 0, 0),
+		"Hips_pos": Vector3(0, -0.34, -0.15)}
+	return _make(1.5, false, [[0.0, _pose({})], [0.4, _pose(raise)], [0.72, _pose(raise)], [0.85, _pose(smash)], [1.2, _pose(smash)], [1.5, _pose({})]])
