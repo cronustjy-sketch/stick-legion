@@ -26,3 +26,4 @@ desktop.ini
 
 # Debug screenshot import stubs
 screenshots/*.import
+screenshots/battle_*.png
