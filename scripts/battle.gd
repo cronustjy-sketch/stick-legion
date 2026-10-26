@@ -15,6 +15,7 @@ var hud: Hud
 var level: int = 1
 var enemy_level: int = 1
 var spawner: EnemySpawner
+var boss: Boss
 var ended: bool = false
 
 var _clouds: Node3D
@@ -42,11 +43,11 @@ func _ready() -> void:
 	army.name = "Army"
 	army.battle = self
 	add_child(army)
+	_setup_level()  # before the HUD, so it shows the right level, fortress HP and boss
 	hud = Hud.new()
 	hud.name = "Hud"
 	hud.battle = self
 	add_child(hud)
-	_setup_level()
 	var args: PackedStringArray = OS.get_cmdline_user_args()
 	if args.has("--hud-test"):
 		var ht: HudAutotest = HudAutotest.new()
@@ -68,6 +69,15 @@ func _ready() -> void:
 		var ut: UnitsAutotest = UnitsAutotest.new()
 		ut.battle = self
 		add_child(ut)
+	if args.has("--select-test"):
+		spawner.enabled = false
+		get_tree().create_timer(1.5).timeout.connect(func() -> void:
+			print("SELECT-TEST battle loaded: level=", level, " boss=", boss != null, " shielded=", enemy_fortress.shielded)
+			get_tree().quit())
+	if args.has("--boss-test"):
+		var bt2: BossAutotest = BossAutotest.new()
+		bt2.battle = self
+		add_child(bt2)
 	if args.has("--skills-test"):
 		spawner.enabled = false
 		var st: SkillsAutotest = SkillsAutotest.new()
@@ -292,12 +302,17 @@ func spawn_wave(key: String, team: int, count: int) -> void:
 
 func _setup_level() -> void:
 	GameState.load_progress()
+	if OS.get_cmdline_user_args().has("--boss-test"):
+		GameState.current_level = 5
 	level = GameState.current_level
 	enemy_level = level
 	spawner = EnemySpawner.new()
 	spawner.name = "EnemySpawner"
 	spawner.setup(self, level)
 	add_child(spawner)
+	enemy_fortress.set_max_hp(float(LevelData.settings(level).fortress_hp))
+	if LevelData.is_boss_level(level):
+		_spawn_boss(level)
 	enemy_fortress.destroyed.connect(func(_t: int) -> void: _finish(true))
 	player_fortress.destroyed.connect(func(_t: int) -> void: _finish(false))
 	hero.out_of_lives.connect(func() -> void: _finish(false))
@@ -327,3 +342,25 @@ func _collapse(f: Fortress) -> void:
 	var t: Tween = create_tween().set_parallel(true)
 	t.tween_property(f, "position:y", f.position.y - 4.0, 1.5).set_ease(Tween.EASE_IN)
 	t.tween_property(f, "rotation:z", 0.12, 1.5)
+
+
+func _spawn_boss(lvl: int) -> void:
+	var def: Dictionary = BossData.for_level(lvl)
+	boss = Boss.new()
+	boss.name = "Boss"
+	boss.battle = self
+	add_child(boss)
+	boss.setup(String(def.key), 1, UnitData.level_multiplier(lvl))
+	boss.configure(lvl)
+	var z: float = -(BattlefieldData.FORTRESS_Z - 9.0)
+	boss.global_position = Vector3(0.0, terrain.height_at(0.0, z), z)
+	boss.rotation.y = PI
+	enemy_fortress.set_shield(true)
+	boss.died.connect(_on_boss_died)
+
+
+func _on_boss_died(_u: Unit) -> void:
+	enemy_fortress.set_shield(false)
+	army.message.emit("Boss defeated! The fortress shield is down!")
+	fx.shake(0.5, 0.8)
+	fx.ring(boss.global_position, 12.0, Color("ffd24a"), 0.8)

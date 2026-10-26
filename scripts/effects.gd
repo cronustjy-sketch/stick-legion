@@ -117,3 +117,31 @@ func _spark_material(color: Color) -> StandardMaterial3D:
 		m.albedo_color = color
 		_spark_mats[key] = m
 	return _spark_mats[key]
+
+
+## Boss attack warning: a red circle on the ground that fills up until the blow lands after `time` seconds.
+func telegraph(pos: Vector3, radius: float, time: float) -> void:
+	var outer: MeshInstance3D = _disc(Color(0.85, 0.05, 0.05, 0.34))
+	outer.global_position = pos + Vector3(0.0, 0.12, 0.0)
+	outer.scale = Vector3(radius, 1.0, radius)
+	var inner: MeshInstance3D = _disc(Color(1.0, 0.1, 0.05, 0.55))
+	inner.global_position = pos + Vector3(0.0, 0.16, 0.0)
+	inner.scale = Vector3(0.2, 1.0, 0.2)
+	var t: Tween = create_tween().set_parallel(true)
+	t.tween_property(inner, "scale", Vector3(radius, 1.0, radius), time).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	t.chain().tween_callback(func() -> void:
+		outer.queue_free()
+		inner.queue_free())
+
+
+func _disc(color: Color) -> MeshInstance3D:
+	var mi: MeshInstance3D = MeshInstance3D.new()
+	mi.mesh = _ring_mesh
+	var m: StandardMaterial3D = StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.albedo_color = color
+	mi.material_override = m
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(mi)
+	return mi

@@ -23,6 +23,10 @@ var _hero_bar: ProgressBar
 var _hero_label: Label
 var _lives_label: Label
 var _toast: Label
+var _boss_panel: PanelContainer
+var _boss_bar: ProgressBar
+var _boss_label: Label
+var _shield_toast_cd: float = 0.0
 var _skill_slots: Dictionary = {}
 var _rage_bar: ProgressBar
 var _rage_label: Label
@@ -44,6 +48,7 @@ func _ready() -> void:
 	_build_top_center(root)
 	_build_top_right(root)
 	_build_orders(root)
+	_build_boss_bar(root)
 	_build_bottom_left(root)
 	_build_spawn_bar(root)
 	_build_skills(root)
@@ -67,6 +72,7 @@ func _connect_signals() -> void:
 	battle.army.pop_changed.connect(_on_pop)
 	battle.army.message.connect(show_toast)
 	battle.army.order_changed.connect(_on_order)
+	battle.enemy_fortress.shield_blocked.connect(_on_shield_blocked)
 	_on_order(battle.army.order)
 	battle.player_fortress.hp_changed.connect(func(c: float, m: float) -> void: _set_fort(_player_bar, _player_label, "Your Fortress", c, m))
 	battle.enemy_fortress.hp_changed.connect(func(c: float, m: float) -> void: _set_fort(_enemy_bar, _enemy_label, "Enemy Fortress", c, m))
@@ -94,6 +100,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _process(_delta: float) -> void:
+	_update_boss_bar()
 	_update_skills()
 	var wait: float = battle.hero.respawn_remaining()
 	_respawn_label.text = "Respawning in %d" % ceili(wait) if wait > 0.0 else ""
@@ -414,3 +421,36 @@ func _on_order(o: int) -> void:
 		b.add_theme_stylebox_override("hover", _box(Color(0.3, 0.3, 0.36, 1.0), GOLD, 4, 6))
 		b.add_theme_stylebox_override("pressed", _box(Color(0.4, 0.32, 0.12, 1.0), GOLD, 4, 6))
 		b.add_theme_color_override("font_color", Color("ffe9a8") if active else TEXT)
+
+
+# --- Boss bar -----------------------------------------------------------------------------------------
+
+func _build_boss_bar(root: Control) -> void:
+	_boss_panel = _panel(root)
+	_anchor(_boss_panel, 0.5, 0.0, 124.0)
+	var v: VBoxContainer = VBoxContainer.new()
+	_boss_panel.add_child(v)
+	_boss_label = _label("", 20, RED)
+	_boss_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(_boss_label)
+	_boss_bar = _bar(Color("b32a22"), Vector2(520, 20))
+	v.add_child(_boss_bar)
+	_boss_panel.visible = false
+
+
+func _update_boss_bar() -> void:
+	_shield_toast_cd -= get_process_delta_time()
+	var b: Boss = battle.boss
+	if b == null or not is_instance_valid(b) or not b.is_alive():
+		_boss_panel.visible = false
+		return
+	_boss_panel.visible = true
+	_boss_bar.max_value = b.max_hp
+	_boss_bar.value = b.hp
+	_boss_label.text = "%s%s" % [b.boss_name, "   (enraged)" if b.phase >= 2 else ""]
+
+
+func _on_shield_blocked() -> void:
+	if _shield_toast_cd <= 0.0:
+		_shield_toast_cd = 3.0
+		show_toast("The fortress is shielded! Defeat the boss first.")

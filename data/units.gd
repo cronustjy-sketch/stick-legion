@@ -28,6 +28,14 @@ const STATS: Dictionary = {
 		"big": true, "charge_mult": 2.0, "radius": 0.8},
 	"catapult": {"name": "Catapult", "hp": 220.0, "dmg": 50.0, "range": 35.0, "speed": 1.2, "cooldown": 4.2, "cost": 140, "pop": 3,
 		"big": true, "ranged": "boulder", "projectile_speed": 17.0, "splash": 3.0, "fortress_mult": 2.0, "radius": 1.2},
+	"boss_gorath": {"name": "Gorath the Warlord", "hp": 2400.0, "dmg": 36.0, "range": 4.6, "speed": 1.7, "cooldown": 2.6, "cost": 0, "pop": 0,
+		"big": true, "aoe": 4.2, "knockback": 4.0, "radius": 2.0},
+	"boss_vexra": {"name": "Vexra the Axe Queen", "hp": 3600.0, "dmg": 46.0, "range": 4.4, "speed": 1.9, "cooldown": 2.4, "cost": 0, "pop": 0,
+		"big": true, "aoe": 4.4, "knockback": 4.5, "radius": 1.9},
+	"boss_mordrek": {"name": "Mordrek the Siege Lord", "hp": 5200.0, "dmg": 58.0, "range": 5.0, "speed": 1.8, "cooldown": 2.4, "cost": 0, "pop": 0,
+		"big": true, "aoe": 4.8, "knockback": 5.0, "radius": 2.3},
+	"boss_emperor": {"name": "The Iron Emperor", "hp": 7600.0, "dmg": 70.0, "range": 5.4, "speed": 2.0, "cooldown": 2.2, "cost": 0, "pop": 0,
+		"big": true, "aoe": 5.2, "knockback": 5.5, "radius": 2.5},
 }
 
 ## Rigged stickman units (the showcase and the old tests use this list).
@@ -69,6 +77,14 @@ const LOOKS: Dictionary = {
 	"cavalry": {"helmet": "plume", "shoulders": true, "chest": "plate", "cape": true, "belt": true,
 		"main": "spear", "off": "", "style": "ride", "scale": 1.0, "bar_height": 3.5},
 	"catapult": {"style": "shoot", "scale": 1.0, "timing": "catapult", "bar_height": 3.3},
+	"boss_gorath": {"helmet": "greathelm", "shoulders": true, "chest": "plate", "cape": true, "belt": true, "main": "hammer", "off": "",
+		"style": "swing", "scale": 3.2, "attack_anim": "attack3", "timing": "attack3", "bar_height": 8.6},
+	"boss_vexra": {"helmet": "plume", "shoulders": true, "chest": "plate", "cape": true, "belt": true, "main": "axe", "off": "",
+		"style": "swing", "scale": 3.1, "attack_anim": "attack3", "timing": "attack3", "bar_height": 8.3},
+	"boss_mordrek": {"helmet": "greathelm", "shoulders": true, "chest": "plate", "cape": true, "belt": true, "main": "sword", "off": "tower_shield",
+		"style": "swing", "scale": 3.4, "attack_anim": "attack3", "timing": "attack3", "bar_height": 9.0},
+	"boss_emperor": {"helmet": "wizard", "shoulders": true, "chest": "plate", "cape": true, "belt": true, "main": "hammer", "off": "",
+		"style": "swing", "scale": 3.7, "attack_anim": "attack3", "timing": "attack3", "bar_height": 10.0},
 }
 
 ## Animation timing used by the unit AI: when in the attack animation the hit lands, and how long it is.
@@ -85,3 +101,4 @@ const ATTACK_TIMING: Dictionary = {
 ## Enemy strength at a campaign level (level 1 = 1.0).
 static func level_multiplier(level: int) -> float:
 	return 1.0 + 0.11 * float(level - 1)
+

@@ -5,6 +5,7 @@ extends Node3D
 
 signal hp_changed(current: float, maximum: float)
 signal destroyed(team: int)
+signal shield_blocked
 
 enum Team { PLAYER, ENEMY }
 
@@ -31,7 +32,10 @@ func _ready() -> void:
 
 
 func take_damage(amount: float, _from: Vector3 = Vector3.ZERO) -> void:
-	if shielded or hp <= 0.0:
+	if hp <= 0.0:
+		return
+	if shielded:
+		shield_blocked.emit()
 		return
 	hp = maxf(hp - amount, 0.0)
 	_hp_bar.set_fill(hp / max_hp)
@@ -182,3 +186,43 @@ func nearest_point(from: Vector3) -> Vector3:
 	var hz: float = float(f.depth) * 0.5 + 0.7
 	var clamped: Vector3 = Vector3(clampf(local.x, -hx, hx), 0.0, clampf(local.z, -hz, hz))
 	return global_transform * clamped
+
+
+var _shield: MeshInstance3D
+
+
+## Boss levels: the enemy fortress is protected by a glowing dome until the boss falls.
+func set_shield(on: bool) -> void:
+	shielded = on
+	if on and _shield == null:
+		_shield = MeshInstance3D.new()
+		_shield.name = "Shield"
+		var s: SphereMesh = SphereMesh.new()
+		s.radius = 1.0
+		s.height = 2.0
+		s.radial_segments = 20
+		s.rings = 10
+		_shield.mesh = s
+		var m: StandardMaterial3D = StandardMaterial3D.new()
+		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		m.albedo_color = Color(0.35, 0.6, 1.0, 0.22)
+		m.cull_mode = BaseMaterial3D.CULL_DISABLED
+		_shield.material_override = m
+		_shield.scale = Vector3(15.0, 10.5, 12.0)
+		_shield.position.y = 2.0
+		_shield.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(_shield)
+		var t: Tween = create_tween().set_loops()
+		t.tween_property(m, "albedo_color:a", 0.34, 0.9)
+		t.tween_property(m, "albedo_color:a", 0.16, 0.9)
+	if _shield != null:
+		_shield.visible = on
+
+
+## Sets the fortress hit points (campaign levels scale the enemy fortress).
+func set_max_hp(value: float) -> void:
+	max_hp = value
+	hp = value
+	if _hp_bar != null:
+		_hp_bar.set_fill(1.0)

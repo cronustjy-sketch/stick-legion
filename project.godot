@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="Stick Legion"
-run/main_scene="res://scenes/battle.tscn"
+run/main_scene="res://scenes/level_select.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 
 [display]

@@ -32,7 +32,8 @@ func show_result(victory: bool, level: int) -> void:
 	var v: VBoxContainer = VBoxContainer.new()
 	v.add_theme_constant_override("separation", 14)
 	panel.add_child(v)
-	var title: Label = _label("VICTORY" if victory else "DEFEAT", 64, Color("e8b44a") if victory else Color("de4b3f"))
+	var finished: bool = victory and level >= LevelData.LEVEL_COUNT
+	var title: Label = _label(("CAMPAIGN COMPLETE" if finished else "VICTORY") if victory else "DEFEAT", 64 if not finished else 48, Color("e8b44a") if victory else Color("de4b3f"))
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(title)
 	var sub: Label = _label(("Level %d cleared. The enemy fortress has fallen." if victory else "Level %d lost. Your fortress fell or your hero is out of lives.") % level, 20, Color("f1ede2"))
@@ -42,9 +43,15 @@ func show_result(victory: bool, level: int) -> void:
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 16)
 	v.add_child(row)
-	if victory:
+	if victory and not finished:
 		row.add_child(_button("Next Level", func() -> void: _go(level + 1)))
 	row.add_child(_button("Retry", func() -> void: _go(level)))
+	row.add_child(_button("Level Select", _to_map))
+
+
+func _to_map() -> void:
+	get_tree().paused = false
+	get_tree().change_scene_to_file("res://scenes/level_select.tscn")
 
 
 func _go(level: int) -> void:

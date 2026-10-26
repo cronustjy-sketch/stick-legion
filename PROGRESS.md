@@ -60,3 +60,11 @@
   Effects (`scripts/effects.gd`): spark bursts on hits, floating damage numbers (white hits, gold heavy, red when the hero is hurt, green heals), expanding rings
   for area skills, camera shake (`HeroCamera.shake`), and a fading sword trail (`scripts/weapon_trail.gd`).
   Test: `godot --path . -- --skills-test` (prints SKILLS-TEST results, saves `screenshots/step9_*.png`).
+- **Step 10: Bosses, 20-level campaign, level-select map** — the game now starts on the campaign map (`scenes/level_select.tscn`, click a level or use
+  arrow keys + Enter; boss levels are the big red nodes; progress is saved). 20 named levels (`data/levels.gd`): enemy strength x(1+0.11(L-1)),
+  enemy fortress HP +8% per level, new enemy unit types as you go. Levels 5/10/15/20 are boss fights (`data/bosses.gd`, `scripts/boss.gd`): a huge warlord with
+  telegraphed attacks (red circles that fill up before the blow: slam, sweep, meteors, summon), phase 2 at 50% HP (faster, more attacks, "enraged"),
+  a boss health bar at the top, and the enemy fortress is behind a blue shield dome until the boss dies. End screens offer Next Level / Retry / Level Select;
+  winning level 20 shows CAMPAIGN COMPLETE.
+  Tests (battle tests now need the scene: `godot --path . res://scenes/battle.tscn -- --boss-test`): `--boss-test` (BOSS-TEST lines, `screenshots/step10_*.png`);
+  `godot --path . -- --select-test` (the map, then starts level 7).

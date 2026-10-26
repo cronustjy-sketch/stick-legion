@@ -30,6 +30,7 @@ var state: State = State.MOVE
 var target: Node
 var model: UnitVisual
 var passive: bool = false  # tests: stands still, never thinks or attacks, but can be hurt
+var busy: bool = false  # bosses stand still while casting a special attack
 
 # Specials (read from UnitData.STATS in setup)
 var ranged: String = ""
@@ -168,6 +169,9 @@ func _die() -> void:
 func _physics_process(delta: float) -> void:
 	if state == State.DEAD or passive:
 		return
+	_extra_process(delta)
+	if busy:
+		return
 	_cd -= delta
 	_think_t -= delta
 	if _think_t <= 0.0:
@@ -199,6 +203,11 @@ func _physics_process(delta: float) -> void:
 			model.play("idle")
 	else:
 		_move(to.normalized(), delta)
+
+
+## Hook for subclasses (Boss): runs every physics frame before the normal AI.
+func _extra_process(_delta: float) -> void:
+	pass
 
 
 func _start_attack() -> void:
