@@ -32,6 +32,11 @@ const BONES: Array = [  # [name, parent, rest position relative to parent]
 	["ThighR", "Hips", Vector3(HX, 0.0, 0.0)],
 	["KneeR", "ThighR", Vector3(0.0, -0.4, 0.0)],
 	["FootR", "KneeR", Vector3(0.0, -0.39, 0.0)],
+	# A chain of four bones for a flowing scarf (only used by looks with "scarf_flow"; driven in code).
+	["Scarf1", "Spine", Vector3(0.0, 0.45, 0.18)],
+	["Scarf2", "Scarf1", Vector3(0.0, -0.2, 0.02)],
+	["Scarf3", "Scarf2", Vector3(0.0, -0.2, 0.02)],
+	["Scarf4", "Scarf3", Vector3(0.0, -0.2, 0.02)],
 ]
 
 const HAND_L: Vector3 = Vector3(-SX, 0.92 + UP_SHIFT, 0.0)
@@ -61,6 +66,12 @@ var skeleton: Skeleton3D
 var player: AnimationPlayer
 var _bone_index: Dictionary = {}
 var _current: StringName = &"idle"
+var _scarf_bones: Array[int] = []
+var _scarf_x: Array[float] = []
+var _scarf_z: Array[float] = []
+var _scarf_time: float = 0.0
+var _prev_pos: Vector3 = Vector3.ZERO
+var _prev_valid: bool = false
 
 
 ## Builds the rig for a unit type ("swordsman", ...) and team (0 = player, 1 = enemy).
@@ -90,6 +101,12 @@ func setup(key: String, team_id: int) -> void:
 	player.playback_default_blend_time = 0.12
 	player.animation_finished.connect(func(a: StringName) -> void: animation_done.emit(a))
 	player.play("idle")
+	set_process(bool(look.get("scarf_flow", false)))  # only the scarf needs a per-frame update
+	if bool(look.get("scarf_flow", false)):
+		for n: String in ["Scarf1", "Scarf2", "Scarf3", "Scarf4"]:
+			_scarf_bones.append(skeleton.find_bone(n))
+			_scarf_x.append(-6.0)
+			_scarf_z.append(0.0)
 
 
 ## Plays an animation by name. Asking for the animation that is already current only updates the speed,
@@ -234,15 +251,22 @@ func _build_gear(m: RigMesh) -> void:
 			m.sphere("Shoulder" + side, Vector3(s * (SX + 0.01), 1.55, 0), 0.135, _metal(), Vector3(1.0, 0.6, 1.05))
 			m.sphere("Shoulder" + side, Vector3(s * (SX + 0.05), 1.49, 0), 0.115, _metal().darkened(0.12), Vector3(0.75, 0.55, 0.95), 6)
 	_chest(m, String(look.chest))
-	if bool(look.get("scarf", false)):  # Aldric's gold scarf: a collar and a tail
+	if bool(look.get("scarf", false)):  # Aldric's gold scarf: a collar, and a tail (a flowing chain of segments for the hero)
 		m.tcyl("Spine", 1.46, 1.58, 0.125, 0.105, 0.85, _cloth(), 8)
-		m.box("Spine", Vector3(0.09, 1.22, 0.13), Vector3(0.12, 0.62, 0.03), _cloth())
+		if not bool(look.get("scarf_flow", false)):
+			m.box("Spine", Vector3(0.09, 1.22, 0.13), Vector3(0.12, 0.62, 0.03), _cloth())
+	if bool(look.get("scarf_flow", false)):
+		_flowing_scarf(m)
+	if bool(look.get("full_armor", false)):
+		_extra_armor(m)
 	if bool(look.belt):
 		m.tcyl("Spine", 0.96, 1.07, 0.12, 0.115, 0.72, C_LEATHER, 8)
 		m.box("Spine", Vector3(0, 1.015, -0.1), Vector3(0.09, 0.08, 0.03), _plume())
 	if bool(look.cape):
-		m.box("Spine", Vector3(0, 1.1, 0.135), Vector3(0.5, 0.9, 0.03), _cloth())
-		m.box("Spine", Vector3(0, 1.52, 0.1), Vector3(0.52, 0.08, 0.1), _cloth_dark())
+		var cape_len: float = float(look.get("cape_len", 0.9))  # Aldric wears a short cape
+		var cape_w: float = 0.5 if cape_len > 0.7 else 0.36
+		m.box("Spine", Vector3(0, 1.52 - cape_len * 0.5, 0.135), Vector3(cape_w, cape_len, 0.03), _cloth().darkened(0.2 if cape_len < 0.7 else 0.0))
+		m.box("Spine", Vector3(0, 1.52, 0.1), Vector3(cape_w + 0.02, 0.08, 0.1), _cloth_dark())
 	_weapon(m, String(look.main), "HandR", HAND_R, 1.0)
 	_weapon(m, String(look.off), "HandL", HAND_L, -1.0)
 
@@ -289,7 +313,8 @@ func _chest(m: RigMesh, kind: String) -> void:
 	match kind:
 		"plate":
 			m.tcyl("Spine", 1.08, 1.53, 0.13, 0.17, 0.7, metal, 8)
-			_tabard(m)
+			if bool(look.get("tabard", true)):
+				_tabard(m)
 		"leather":
 			m.tcyl("Spine", 1.08, 1.52, 0.12, 0.145, 0.68, C_LEATHER, 8)
 			_tabard(m)
@@ -375,3 +400,61 @@ func weapon_world_points() -> Array[Vector3]:
 	var tip: Vector3 = skeleton.global_transform * (m * (f * Vector3(0.0, 1.0, 0.0)))
 	var base: Vector3 = skeleton.global_transform * (m * (f * Vector3(0.0, 0.2, 0.0)))
 	return [tip, base]
+
+
+# --- Hero extras: steel armour details and the flowing scarf ---------------------------------------------
+
+## Steel details that make Aldric read as a warrior from every side: back plate, faulds, bracers, greaves, knee plates.
+func _extra_armor(m: RigMesh) -> void:
+	var metal: Color = _metal()
+	m.frame = _frame_upper()
+	m.box("Spine", Vector3(0.0, 1.3, 0.125), Vector3(0.06, 0.42, 0.05), metal.lightened(0.12))  # spine ridge
+	for s: float in [-1.0, 1.0]:
+		m.box("Spine", Vector3(s * 0.1, 1.38, 0.115), Vector3(0.16, 0.22, 0.05), metal.darkened(0.08), Basis(Vector3.BACK, deg_to_rad(-12.0 * s)))
+		m.box("Spine", Vector3(s * 0.09, 1.16, 0.11), Vector3(0.14, 0.16, 0.05), metal.darkened(0.14), Basis(Vector3.BACK, deg_to_rad(8.0 * s)))
+	m.tcyl("Spine", 0.84, 0.96, 0.17, 0.155, 0.78, metal.darkened(0.1), 8)  # faulds: overlapping waist plates
+	m.tcyl("Spine", 0.75, 0.85, 0.185, 0.17, 0.78, metal, 8)
+	m.tcyl("Spine", 0.68, 0.76, 0.19, 0.185, 0.78, metal.darkened(0.1), 8)
+	m.box("Spine", Vector3(0.0, 0.9, -0.1), Vector3(0.1, 0.07, 0.04), _plume())  # gold clasp
+	for s: float in [-1.0, 1.0]:
+		var side: String = "L" if s < 0.0 else "R"
+		var el: Vector3 = Vector3(s * SX, 1.2, 0)
+		m.cyl("Elbow" + side, el + Vector3(0, -0.04, 0), el + Vector3(0, -0.2, 0), 0.07, 0.065, metal, 7)  # bracer
+		m.sphere("Hand" + side, Vector3(s * SX, 0.94, 0), 0.088, metal.darkened(0.1), Vector3.ONE, 6)  # gauntlet
+	m.frame = Transform3D.IDENTITY
+	for s: float in [-1.0, 1.0]:
+		var side2: String = "L" if s < 0.0 else "R"
+		m.cyl("Knee" + side2, Vector3(s * HX, 0.4, 0), Vector3(s * HX, 0.1, 0), 0.075, 0.066, metal, 7)  # greave
+		m.sphere("Knee" + side2, Vector3(s * HX, 0.43, -0.03), 0.09, metal.lightened(0.08), Vector3(1.0, 0.9, 0.8), 6)  # knee plate
+		m.box("Foot" + side2, Vector3(s * HX, 0.05, -0.1), Vector3(0.15, 0.06, 0.2), metal.darkened(0.25))  # boot cap
+
+
+## A long gold scarf made of four ribbon segments, each skinned to its own bone (see _process for the motion).
+func _flowing_scarf(m: RigMesh) -> void:
+	m.frame = Transform3D.IDENTITY
+	var widths: Array[float] = [0.13, 0.13, 0.12, 0.11]
+	var tops: Array[float] = [1.32, 1.12, 0.92, 0.72]
+	for i: int in 4:
+		var col: Color = _cloth().lightened(0.15) if i % 2 == 0 else _cloth()
+		m.box("Scarf%d" % (i + 1), Vector3(0.0, tops[i] - 0.1, 0.18 + 0.01 * float(i)), Vector3(widths[i], 0.21, 0.025), col)
+	m.box("Scarf4", Vector3(0.0, 0.55, 0.21), Vector3(0.09, 0.09, 0.025), _cloth().darkened(0.12), Basis(Vector3.BACK, deg_to_rad(45.0)))
+
+
+func _process(delta: float) -> void:
+	if _scarf_bones.is_empty():
+		return
+	var gp: Vector3 = global_position
+	var vel: Vector3 = (gp - _prev_pos) / maxf(delta, 0.0001) if _prev_valid else Vector3.ZERO
+	_prev_valid = true
+	_prev_pos = gp
+	var lv: Vector3 = global_transform.basis.orthonormalized().inverse() * vel
+	var fwd: float = clampf(-lv.z / 8.0, -0.4, 1.3)
+	var side: float = clampf(lv.x / 8.0, -1.0, 1.0)
+	_scarf_time += delta
+	for i: int in _scarf_bones.size():
+		var flutter: float = sin(_scarf_time * 3.2 + float(i) * 0.9) * (3.0 + 9.0 * clampf(fwd, 0.0, 1.0))
+		var want_x: float = -(6.0 + 24.0 * fwd) + flutter
+		var want_z: float = side * -16.0 + sin(_scarf_time * 2.1 + float(i)) * 3.0
+		_scarf_x[i] = lerpf(_scarf_x[i], want_x, clampf((15.0 - 2.5 * float(i)) * delta, 0.0, 1.0))
+		_scarf_z[i] = lerpf(_scarf_z[i], want_z, clampf((12.0 - 2.0 * float(i)) * delta, 0.0, 1.0))
+		skeleton.set_bone_pose_rotation(_scarf_bones[i], Quaternion.from_euler(Vector3(deg_to_rad(_scarf_x[i]), 0.0, deg_to_rad(_scarf_z[i]))))

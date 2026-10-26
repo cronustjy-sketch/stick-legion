@@ -28,7 +28,7 @@ func _ready() -> void:
 	Settings.init()
 	InputSetup.ensure()
 	for a: String in OS.get_cmdline_user_args():
-		if a.ends_with("-test") or a.begins_with("--boss-level="):
+		if (a.ends_with("-test") and a != "--start-test") or a.begins_with("--boss-level="):
 			GameState.persist = false  # scripted tests never touch the real save file
 			unlock_all = true  # ...and may buy any unit
 	_rng.seed = BattlefieldData.SCENE_SEED
@@ -56,6 +56,10 @@ func _ready() -> void:
 	add_child(pause)
 	_setup_level()  # before the HUD, so it shows the right level, fortress HP and boss
 	Sfx.music("music_boss" if LevelData.is_boss_level(level) else "music_battle")
+	if not unlock_all:  # every battle starts with four swordsmen already at the gate (scripted tests start empty)
+		for i: int in 4:
+			spawn_unit("swordsman", 0, 3.0)
+		army.recount_pop()
 	hud = Hud.new()
 	hud.name = "Hud"
 	hud.battle = self
@@ -88,6 +92,12 @@ func _ready() -> void:
 		add_child(ut)
 	if args.has("--flow-test"):
 		_run_flow_test()
+	if args.has("--start-test"):
+		spawner.enabled = false
+		_run_start_test()
+	if args.has("--look-test"):
+		spawner.enabled = false
+		_run_look_test()
 	if args.has("--touch-test"):
 		spawner.enabled = false
 		_run_touch_test()
@@ -199,8 +209,8 @@ func _scatter_props() -> void:
 		guard += 1
 		var side: float = -1.0 if _rng.randf() < 0.5 else 1.0
 		var x: float = side * _rng.randf_range(BattlefieldData.FIELD_HALF_WIDTH + 1.0, 46.0)
-		var z: float = _rng.randf_range(-78.0, 78.0)
-		if absf(z) > 62.0 and absf(x) < 30.0:
+		var z: float = _rng.randf_range(-(BattlefieldData.FORTRESS_Z + 8.0), BattlefieldData.FORTRESS_Z + 8.0)
+		if absf(z) > BattlefieldData.FORTRESS_Z - 8.0 and absf(x) < 30.0:
 			continue
 		var s: float = _rng.randf_range(0.9, 1.7)
 		var y: float = terrain.height_at(x, z)
@@ -218,7 +228,7 @@ func _scatter_props() -> void:
 	for i: int in int(round(float(BattlefieldData.ROCK_COUNT) * Settings.prop_density())):
 		var x: float
 		x = (-1.0 if _rng.randf() < 0.5 else 1.0) * _rng.randf_range(BattlefieldData.FIELD_HALF_WIDTH + 0.5, 42.0)
-		var z: float = _rng.randf_range(-70.0, 70.0)
+		var z: float = _rng.randf_range(-(BattlefieldData.FORTRESS_Z - 4.0), BattlefieldData.FORTRESS_Z - 4.0)
 		var sc: Vector3 = Vector3(_rng.randf_range(0.8, 2.4), _rng.randf_range(0.7, 1.8), _rng.randf_range(0.8, 2.4))
 		var b: Basis = Basis.from_scale(sc).rotated(Vector3.UP, _rng.randf() * TAU)
 		rocks.append(Transform3D(b, Vector3(x, terrain.height_at(x, z) + sc.y * 0.25, z)))
@@ -284,7 +294,7 @@ func _spawn_hero() -> void:
 	hero.name = "Hero"
 	hero.terrain = terrain
 	hero.battle = self
-	var z: float = BattlefieldData.FORTRESS_Z - 10.0
+	var z: float = BattlefieldData.FORTRESS_Z - 16.0  # well outside the gate, so the camera never ends up inside the walls
 	hero.position = Vector3(0.0, terrain.height_at(0.0, z), z)
 	add_child(hero)
 	hero.spawn_position = hero.global_position
@@ -298,7 +308,7 @@ func _spawn_hero() -> void:
 
 ## Debug punching bags in front of the player fortress (removed once real units exist in step 4).
 func _spawn_dummies() -> void:
-	for p: Vector2 in [Vector2(0.8, 50.5), Vector2(-3.5, 47.0), Vector2(3.5, 44.0)]:
+	for p: Vector2 in [Vector2(0.8, BattlefieldData.FORTRESS_Z - 18.5), Vector2(-3.5, BattlefieldData.FORTRESS_Z - 22.0), Vector2(3.5, BattlefieldData.FORTRESS_Z - 25.0)]:
 		var d: TrainingDummy = TrainingDummy.new()
 		d.position = Vector3(p.x, terrain.height_at(p.x, p.y), p.y)
 		d.rotation.y = PI  # face the hero
@@ -310,7 +320,7 @@ func spawn_unit(key: String, team: int, spread: float = 4.0) -> Unit:
 	var u: Unit = Unit.new()
 	u.name = "%s_t%d" % [key, team]
 	u.battle = self
-	var z: float = (BattlefieldData.FORTRESS_Z - 8.0) * (1.0 if team == 0 else -1.0)
+	var z: float = (BattlefieldData.FORTRESS_Z - 12.0) * (1.0 if team == 0 else -1.0)
 	var x: float = randf_range(-spread, spread)
 	u.position = Vector3(x, terrain.height_at(x, z), z)
 	u.rotation.y = 0.0 if team == 0 else PI
@@ -389,7 +399,7 @@ func _spawn_boss(lvl: int) -> void:
 		add_child(b)
 		b.setup(String(keys[i]), 1, 1.0 + 0.06 * float(lvl - 1))  # bosses scale a bit slower than normal enemies
 		b.configure(lvl, def)
-		var z: float = -(BattlefieldData.FORTRESS_Z - 9.0)
+		var z: float = -(BattlefieldData.FORTRESS_Z - 12.0)
 		var x: float = (float(i) - float(keys.size() - 1) * 0.5) * 6.0
 		b.global_position = Vector3(x, terrain.height_at(x, z), z)
 		b.rotation.y = PI
@@ -568,4 +578,65 @@ func _run_touch_test() -> void:
 	Input.parse_input_event(blk)
 	await get_tree().create_timer(0.2).timeout
 	print("TOUCH-TEST skill tap (HUD slot) cast Q: ", hero.skills.try_cast("q"))
+	get_tree().quit()
+
+
+## Looks at the hero from behind, the side and the front, standing and running (godot ... battle.tscn -- --look-test).
+func _run_look_test() -> void:
+	unlock_all = true
+	hero.mouse_gate = false
+	await get_tree().create_timer(0.8).timeout
+	var cam: HeroCamera = hero_camera
+	cam.distance = 3.2
+	cam.pitch = 0.18
+	var shots: Array = [["back_idle", 0.0, false], ["side_idle", PI * 0.5, false], ["front_idle", PI, false], ["back_run", 0.0, true], ["side_run", PI * 0.5, true]]
+	for s: Array in shots:
+		cam.yaw = float(s[1])
+		var fwd: bool = bool(s[2])
+		var e: InputEventAction = InputEventAction.new()
+		e.action = "move_forward"
+		e.pressed = fwd
+		Input.parse_input_event(e)
+		var sp: InputEventAction = InputEventAction.new()
+		sp.action = "sprint"
+		sp.pressed = fwd
+		Input.parse_input_event(sp)
+		cam.yaw = 0.0 if fwd else float(s[1])  # run straight ahead, then swing the camera round for the picture
+		await get_tree().create_timer(1.2 if fwd else 0.6).timeout
+		if fwd:
+			cam.yaw = float(s[1])
+			await get_tree().create_timer(0.25).timeout
+		await RenderingServer.frame_post_draw
+		var sk: Skeleton3D = hero.model.skeleton
+		print("LOOK-TEST ", s[0], " scarf bone tilt (deg) 1..4: ", snappedf(rad_to_deg(sk.get_bone_pose_rotation(sk.find_bone("Scarf1")).get_euler().x), 1.0), " ", snappedf(rad_to_deg(sk.get_bone_pose_rotation(sk.find_bone("Scarf2")).get_euler().x), 1.0), " ", snappedf(rad_to_deg(sk.get_bone_pose_rotation(sk.find_bone("Scarf4")).get_euler().x), 1.0))
+		DebugShot.save(get_viewport(), "look_aldric_" + String(s[0]))
+		if fwd:
+			hero.global_position = Vector3(0.0, 0.0, BattlefieldData.FORTRESS_Z - 16.0)
+	get_tree().quit()
+
+
+## Checks how a battle starts (godot ... battle.tscn -- --start-test): four swordsmen, short field, controls panel for 10 s.
+func _run_start_test() -> void:
+	hero.mouse_gate = false
+	await get_tree().create_timer(1.0).timeout
+	print("START-TEST gold units at start: ", get_tree().get_nodes_in_group("units_team0").size(), " (expect 4)  distance between fortresses: ",
+		snappedf(absf(player_fortress.position.z - enemy_fortress.position.z), 0.1), " m (was 140)")
+	print("START-TEST controls panel visible at 1 s: ", hud._hint_panel.visible, " (expect true)")
+	await get_tree().create_timer(1.5).timeout
+	await RenderingServer.frame_post_draw
+	DebugShot.save(get_viewport(), "start_battle")
+	await get_tree().create_timer(9.0).timeout
+	print("START-TEST controls panel visible at 11.5 s: ", hud._hint_panel.visible, " (expect false)")
+	hud._help_button.pressed.emit()
+	print("START-TEST after pressing ?: ", hud._hint_panel.visible, " (expect true)")
+	var victim: Unit = spawn_unit("swordsman", 1, 0.0)
+	victim.passive = true
+	victim.global_position = Vector3(10.0, terrain.height_at(10.0, 20.0), 20.0)
+	var before: Vector3 = victim.global_position
+	victim.take_damage(60.0, before + Vector3(0.0, 0.0, 3.0))  # killed by a blow from the +Z side
+	await get_tree().create_timer(0.6).timeout
+	var moved: Vector3 = victim.global_position - before
+	print("START-TEST death knockback: moved ", snappedf(moved.length(), 0.1), " m, away from the attacker (z change ", snappedf(moved.z, 0.1), ", expect negative)")
+	var cam_d: float = hero_camera.distance
+	print("START-TEST default camera distance: ", cam_d, " (was 4.8)")
 	get_tree().quit()

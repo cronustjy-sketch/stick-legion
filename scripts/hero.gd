@@ -264,7 +264,7 @@ func _strike(damage: float) -> void:
 	if hits > 0:
 		Sfx.play("hit", -3.0)
 	if hits > 0 and battle != null:
-		battle.fx.shake(0.04 + 0.05 * float(_combo), 0.18)
+		battle.fx.shake(0.06 + 0.05 * float(_combo), 0.2)
 	struck.emit(hits, _combo)
 
 

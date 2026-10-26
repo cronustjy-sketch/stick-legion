@@ -64,6 +64,8 @@ var _goal: Vector3 = Vector3.ZERO
 var _has_goal: bool = false
 var _run_dist: float = 99.0  # distance travelled since the last attack (cavalry charge)
 var _hp_bar: HpBar3D
+var _last_from: Vector3 = Vector3.ZERO  # where the killing blow came from
+var _last_dmg: float = 0.0
 var _bar_height: float = 2.5
 var _marker: MeshInstance3D
 
@@ -129,6 +131,9 @@ func take_damage(amount: float, from_pos: Vector3 = Vector3.ZERO) -> void:
 		return
 	var dealt: float = amount * (1.0 - armor)
 	hp -= dealt
+	_last_dmg = dealt
+	if from_pos != Vector3.ZERO:
+		_last_from = from_pos
 	_update_hp_bar()
 	_hit_fx(dealt)
 	Sfx.play("clang" if blocks_arrows else "hit", -7.0, global_position)
@@ -162,6 +167,7 @@ func _die() -> void:
 	_marker.visible = false
 	model.play("die", 1.0, true)
 	Sfx.play("death", -5.0, global_position)
+	_fly_back()
 	var shadow: Node = model.get_node_or_null("BlobShadow")
 	if shadow != null:
 		(shadow as Node3D).visible = false
@@ -446,12 +452,12 @@ func _slot_offset() -> Vector3:
 
 func _hold_point() -> Vector3:
 	var o: Vector3 = _slot_offset()
-	return Vector3(o.x, 0.0, BattlefieldData.FORTRESS_Z - 24.0 + o.z)
+	return Vector3(o.x, 0.0, BattlefieldData.FORTRESS_Z - 28.0 + o.z)
 
 
 func _retreat_point() -> Vector3:
 	var o: Vector3 = _slot_offset()
-	return Vector3(o.x * 0.8, 0.0, BattlefieldData.FORTRESS_Z - 9.0 + o.z * 0.8)
+	return Vector3(o.x * 0.8, 0.0, BattlefieldData.FORTRESS_Z - 14.0 + o.z * 0.8)
 
 
 func _follow_point() -> Vector3:
@@ -575,3 +581,21 @@ func knock_away(from: Vector3, distance: float) -> void:
 	p.y = battle.terrain.height_at(p.x, p.z)
 	var tw: Tween = create_tween()
 	tw.tween_property(self, "global_position", p, 0.25).set_ease(Tween.EASE_OUT)
+
+
+## Units that die are thrown back a little, away from whatever killed them, with a small hop.
+func _fly_back() -> void:
+	var away: Vector3 = global_position - _last_from
+	away.y = 0.0
+	if _last_from == Vector3.ZERO or away.length() < 0.05:
+		away = Vector3(-sin(rotation.y), 0.0, -cos(rotation.y)) * -1.0
+	var dist: float = (0.6 if is_big else 1.7 + minf(_last_dmg / 18.0, 2.2))
+	var p: Vector3 = global_position + away.normalized() * dist
+	p.x = clampf(p.x, -(BattlefieldData.VALLEY_HALF_WIDTH + 4.0), BattlefieldData.VALLEY_HALF_WIDTH + 4.0)
+	p.z = clampf(p.z, -(BattlefieldData.FORTRESS_Z + 10.0), BattlefieldData.FORTRESS_Z + 10.0)
+	p.y = battle.terrain.height_at(p.x, p.z)
+	var slide: Tween = create_tween()
+	slide.tween_property(self, "global_position", p, 0.4).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	var hop: Tween = create_tween()
+	hop.tween_property(model, "position:y", 0.5 if not is_big else 0.1, 0.17).set_ease(Tween.EASE_OUT)
+	hop.tween_property(model, "position:y", 0.0, 0.23).set_ease(Tween.EASE_IN)

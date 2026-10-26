@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0d0f14"/><stop offset="1" stop-color="#1c202b"/></linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.6" r="0.5"><stop offset="0" stop-color="#e8b44a" stop-opacity="0.22"/><stop offset="1" stop-color="#e8b44a" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <ellipse cx="700" cy="470" rx="520" ry="260" fill="url(#glow)"/>
+  <polygon points="0,640 160,520 300,600 470,490 640,610 820,500 1010,600 1150,520 1280,590 1280,720 0,720" fill="#161922"/>
+  <polygon points="0,670 210,610 420,660 650,620 880,665 1100,615 1280,660 1280,720 0,720" fill="#10121a"/>
+  <ellipse cx="660" cy="655" rx="150" ry="16" fill="#000" opacity="0.5"/>
+  <!-- banner pole and gold banner -->
+  <polygon points="746,205 756,205 756,658 746,658" fill="#7a5a3a"/>
+  <polygon points="751,184 760,205 742,205" fill="#e8b44a"/>
+  <polygon points="756,214 930,236 892,278 936,322 756,340" fill="#e8b44a"/>
+  <polygon points="756,214 930,236 892,278 756,276" fill="#ffd36a"/>
+  <polygon points="756,276 892,278 936,322 756,340" fill="#c98f28"/>
+  <polygon points="800,270 860,276 840,300 800,296" fill="#8a5f14" opacity="0.55"/>
+  <!-- cape -->
+  <polygon points="612,372 548,392 560,500 604,470" fill="#c98f28"/>
+  <!-- legs -->
+  <polygon points="624,478 660,478 654,566 676,650 628,650 630,566" fill="#2b2b31"/>
+  <polygon points="624,478 628,566 630,650 590,650 598,566 604,478" fill="#212127"/>
+  <polygon points="582,650 632,650 632,664 574,664" fill="#16161a"/>
+  <polygon points="626,650 680,650 686,664 626,664" fill="#16161a"/>
+  <polygon points="598,566 630,566 626,590 602,590" fill="#cdd6e0"/>
+  <polygon points="632,566 658,566 662,590 636,590" fill="#cdd6e0"/>
+  <!-- torso: steel plate with a gold sash -->
+  <polygon points="600,350 684,350 696,404 666,486 618,486 588,404" fill="#cdd6e0"/>
+  <polygon points="600,350 642,350 642,486 618,486 588,404" fill="#b0bac6"/>
+  <polygon points="630,356 654,356 656,490 628,490" fill="#ffc531"/>
+  <polygon points="604,470 680,470 684,488 600,488" fill="#5a4030"/>
+  <!-- left arm holding a sword down -->
+  <polygon points="590,362 566,376 548,440 566,448 580,396" fill="#2b2b31"/>
+  <polygon points="548,438 566,446 562,470 544,462" fill="#cdd6e0"/>
+  <polygon points="554,462 566,462 570,610 560,640 550,610" fill="#e8ecf2"/>
+  <polygon points="540,458 574,458 574,468 540,468" fill="#8a8f98"/>
+  <!-- right arm raised to the banner -->
+  <polygon points="684,362 708,372 740,400 734,418 700,396 684,388" fill="#2b2b31"/>
+  <polygon points="728,394 756,392 758,428 730,430" fill="#cdd6e0"/>
+  <!-- shoulder plates -->
+  <polygon points="570,346 606,336 612,370 576,382" fill="#e8ecf2"/>
+  <polygon points="676,336 712,346 706,382 672,372" fill="#e8ecf2"/>
+  <!-- head and helmet -->
+  <polygon points="626,338 656,338 654,352 628,352" fill="#26262b"/>
+  <polygon points="640,262 672,274 686,304 676,336 640,346 604,336 594,304 608,274" fill="#26262b"/>
+  <polygon points="640,250 676,266 690,300 596,300 604,266" fill="#cdd6e0"/>
+  <polygon points="640,250 676,266 690,300 640,300" fill="#b0bac6"/>
+  <polygon points="600,296 680,296 684,310 596,310" fill="#8f99a6"/>
+  <polygon points="630,230 650,230 662,268 618,268" fill="#ffd36a"/>
+  <polygon points="650,230 664,240 668,272 650,268" fill="#e8b44a"/>
+</svg>

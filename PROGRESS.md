@@ -110,3 +110,9 @@
   a finger (`(pointer: coarse)`), or with `?touch=1` in the address; phones never try to capture the pointer. See README.md for how to host the build.
 - **Published**: the Web build is live on GitHub Pages at https://cronustjy-sketch.github.io/stick-legion/ (branch `gh-pages`, files from `build/web/` plus `.nojekyll`; the `main` branch is unchanged
   by deploys). To update: re-export, copy `build/web/*` into a `gh-pages` checkout, commit, push.
+- **Polish pass** — Aldric (`hero` look): no tabard; steel plate armour with back plate, faulds, bracers, greaves and knee plates, a short dark-gold cape and a long gold scarf
+  (4 ribbon segments on extra bones, driven in `Stickman._process`: it streams out behind him when he moves and sways when idle); sword visible. Default camera distance 4.8 -> 6.6 (zoom unchanged).
+  Fortresses are 98 m apart (was 140) and the terrain/props/orders scale with `FORTRESS_Z`; every battle starts with 4 swordsmen at the gate; the hero spawns outside the gate (the camera used to end up
+  inside the walls). The controls panel shows for the first 10 s of level 1 only; a "?" button (top right) toggles it. Fight feel: sparks, bigger hero-hit screen shake, damage numbers (already in), and
+  units are thrown back with a small hop when they die. Boot splash, web loading screen and favicon: gold "STICK LEGION" + a low-poly stickman with a gold banner (`ui/splash_art.svg`, `tools/make_splash.gd`
+  -> `ui/splash.png`, `icon.svg`; the loading bar is gold, styled via the Web preset's head include). Tests: `battle.tscn -- --start-test`, `-- --look-test` (screenshots of Aldric from behind/side/front).

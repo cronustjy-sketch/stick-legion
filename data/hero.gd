@@ -32,7 +32,7 @@ const COMBO: Array[Dictionary] = [
 ]
 
 const CAMERA: Dictionary = {
-	"distance": 4.8,
+	"distance": 6.6,
 	"min_distance": 2.4,
 	"max_distance": 10.0,
 	"shoulder": 0.75,  # sideways offset (over-the-shoulder)

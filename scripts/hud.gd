@@ -24,6 +24,8 @@ var _hero_label: Label
 var _lives_label: Label
 var _toast: Label
 var _hint_panel: PanelContainer
+var _help_button: Button
+var _help_token: int = 0
 var _boss_panel: PanelContainer
 var _boss_bars: Array[ProgressBar] = []
 var _boss_labels: Array[Label] = []
@@ -70,8 +72,6 @@ func _ready() -> void:
 	root.add_child(_respawn_label)
 	_anchor(_respawn_label, 0.5, 0.5, 0.0)
 	_connect_signals()
-	if TouchControls.wanted():
-		_hint_panel.visible = false
 
 
 func _connect_signals() -> void:
@@ -193,11 +193,42 @@ func _build_top_center(root: Control) -> void:
 
 
 func _build_top_right(root: Control) -> void:
+	var touch: bool = TouchControls.wanted()
+	var margin: float = 14.0 + (170.0 if touch else 0.0)  # on phones the Map and Pause buttons sit in the corner
+	_help_button = Button.new()
+	_help_button.text = "?"
+	_help_button.custom_minimum_size = Vector2(40, 40)
+	_help_button.focus_mode = Control.FOCUS_NONE
+	_help_button.add_theme_font_size_override("font_size", 22)
+	_help_button.add_theme_stylebox_override("normal", _box(Color(0.14, 0.15, 0.18, 0.95), GOLD.darkened(0.3), 4, 20))
+	_help_button.add_theme_stylebox_override("hover", _box(Color(0.3, 0.25, 0.12, 1.0), GOLD, 4, 20))
+	_help_button.add_theme_stylebox_override("pressed", _box(Color(0.4, 0.32, 0.12, 1.0), GOLD, 4, 20))
+	_help_button.pressed.connect(func() -> void: _show_help(not _hint_panel.visible))
+	root.add_child(_help_button)
+	_anchor(_help_button, 1.0, 0.0, margin)
 	var p: PanelContainer = _panel(root)
 	_hint_panel = p
-	_anchor(p, 1.0, 0.0, 14.0)
-	var l: Label = _label("WASD move   Shift sprint   Space roll\nLeft click attack   Right click block\nZ X C V B N M , . /  spawn units\nEsc  pause   Hold Alt  use the mouse", 14, DIM)
-	p.add_child(l)
+	_anchor(p, 1.0, 0.0, margin)
+	p.offset_top += 50.0
+	p.offset_bottom += 50.0
+	var text: String = "WASD move   Shift sprint   Space roll\nLeft click attack   Right click block\nQ E R F skills   G ultimate (full rage)\n1-4 army orders   Hold Tab: tactical view\nZ X C V B N M , . /  buy units\nEsc pause   Hold Alt: use the mouse"
+	if touch:
+		text = "Left stick: move (push to the edge to sprint)\nAttack / Roll / Block buttons\nDrag the right side to look around\nTap skills, orders and units\nMap: tactical view   II: pause"
+	p.add_child(_label(text, 14, DIM))
+	# The controls are shown for the first 10 seconds of level 1; the "?" button brings them back.
+	_hint_panel.visible = false
+	if battle.level == 1:
+		_show_help(true)
+
+
+func _show_help(on: bool) -> void:
+	_hint_panel.visible = on
+	_help_token += 1
+	if on:
+		var token: int = _help_token
+		get_tree().create_timer(10.0).timeout.connect(func() -> void:
+			if token == _help_token:
+				_hint_panel.visible = false)
 
 
 func _build_bottom_left(root: Control) -> void:

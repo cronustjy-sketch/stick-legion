@@ -6,10 +6,10 @@ const VALLEY_LENGTH: float = 120.0
 const VALLEY_HALF_WIDTH: float = 34.0
 const FIELD_HALF_WIDTH: float = 24.0  # open grass: no trees or rocks inside (48 m wide)
 const TERRAIN_HALF_X: float = 70.0
-const TERRAIN_HALF_Z: float = 125.0
+const TERRAIN_HALF_Z: float = 100.0
 const TERRAIN_CELL: float = 2.0
 
-const FORTRESS_Z: float = 70.0  # distance of each fortress from the centre
+const FORTRESS_Z: float = 49.0  # distance of each fortress from the centre (98 m between them)
 
 const FORTRESS: Dictionary = {
 	"max_hp": 3000.0,

@@ -1,12 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
-  <rect width="128" height="128" rx="22" fill="#2c6cc4"/>
-  <rect y="86" width="128" height="42" fill="#6f9a45"/>
-  <circle cx="64" cy="44" r="17" fill="#26262b"/>
-  <path d="M44 38 Q64 14 84 38 L84 44 L44 44 Z" fill="#cdd6e0"/>
-  <rect x="60" y="14" width="8" height="14" rx="3" fill="#e8b44a"/>
-  <rect x="57" y="60" width="14" height="40" rx="5" fill="#e8b44a"/>
-  <rect x="40" y="64" width="48" height="9" rx="4" fill="#26262b"/>
-  <rect x="53" y="98" width="9" height="22" rx="3" fill="#26262b"/>
-  <rect x="66" y="98" width="9" height="22" rx="3" fill="#26262b"/>
-  <rect x="92" y="30" width="6" height="64" rx="2" fill="#e8ecf2"/>
+  <rect width="128" height="128" rx="22" fill="#14171f"/>
+  <polygon points="0,104 30,86 56,100 86,82 128,102 128,128 0,128" fill="#1d212b"/>
+  <polygon points="90,24 93,24 93,112 90,112" fill="#7a5a3a"/>
+  <polygon points="93,26 122,31 114,40 123,50 93,54" fill="#e8b44a"/>
+  <polygon points="93,26 122,31 114,40 93,40" fill="#ffd36a"/>
+  <polygon points="52,66 70,66 72,86 50,86" fill="#cdd6e0"/>
+  <polygon points="58,67 64,67 64,88 58,88" fill="#ffc531"/>
+  <polygon points="52,86 70,86 70,112 62,112 61,98 58,112 50,112" fill="#2b2b31"/>
+  <polygon points="48,64 54,62 56,70 50,72" fill="#e8ecf2"/>
+  <polygon points="68,62 74,64 72,72 66,70" fill="#e8ecf2"/>
+  <polygon points="72,68 82,68 90,60 92,64 82,74 72,74" fill="#2b2b31"/>
+  <polygon points="61,40 73,45 77,56 61,60 45,56 49,45" fill="#26262b"/>
+  <polygon points="61,32 75,40 78,52 44,52 48,40" fill="#cdd6e0"/>
+  <polygon points="61,32 75,40 78,52 61,52" fill="#b0bac6"/>
+  <polygon points="56,22 66,22 70,38 52,38" fill="#ffd36a"/>
 </svg>

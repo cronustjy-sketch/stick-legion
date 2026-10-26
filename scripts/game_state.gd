@@ -19,6 +19,9 @@ static func load_progress() -> void:
 	if _loaded:
 		return
 	_loaded = true
+	for a: String in OS.get_cmdline_user_args():
+		if (a.ends_with("-test") and a != "--start-test") or a.begins_with("--boss-level=") or a.begins_with("--story-ending="):
+			persist = false  # scripted tests never touch the real save file
 	var cfg: ConfigFile = ConfigFile.new()
 	if cfg.load(SAVE_PATH) == OK:
 		highest_unlocked = int(cfg.get_value("progress", "highest_unlocked", 1))

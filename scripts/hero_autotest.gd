@@ -89,7 +89,7 @@ func _run() -> void:
 	_press("block", false)
 	await _wait(0.4)
 	# Fortress: teleport to the enemy gate and hit it.
-	hero.global_position = Vector3(0.0, 0.0, -63.0)
+	hero.global_position = Vector3(0.0, 0.0, -(BattlefieldData.FORTRESS_Z - 6.0))
 	hero.rotation.y = 0.0
 	cam._focus = hero.global_position
 	cam.yaw = 0.5
