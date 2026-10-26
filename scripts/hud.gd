@@ -85,9 +85,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not (event is InputEventKey) or not event.is_pressed() or (event as InputEventKey).echo:
 		return
 	var k: InputEventKey = event
-	for i: int in UnitData.HUMANOID_ORDER.size():
+	for i: int in UnitData.ALL_ORDER.size():
 		if k.physical_keycode == EconomyData.SPAWN_KEYS[i]:
-			battle.army.try_spawn(UnitData.HUMANOID_ORDER[i])
+			battle.army.try_spawn(UnitData.ALL_ORDER[i])
 
 
 func _process(_delta: float) -> void:
@@ -172,7 +172,7 @@ func _build_top_center(root: Control) -> void:
 func _build_top_right(root: Control) -> void:
 	var p: PanelContainer = _panel(root)
 	_anchor(p, 1.0, 0.0, 14.0)
-	var l: Label = _label("WASD move   Shift sprint   Space roll\nLeft click attack   Right click block\nZ X C V B N M  spawn units\nEsc  free the mouse", 14, DIM)
+	var l: Label = _label("WASD move   Shift sprint   Space roll\nLeft click attack   Right click block\nZ X C V B N M , . /  spawn units\nEsc  free the mouse", 14, DIM)
 	p.add_child(l)
 
 
@@ -195,15 +195,15 @@ func _build_spawn_bar(root: Control) -> void:
 	var h: HBoxContainer = HBoxContainer.new()
 	h.add_theme_constant_override("separation", 8)
 	p.add_child(h)
-	for i: int in UnitData.HUMANOID_ORDER.size():
-		var key: String = UnitData.HUMANOID_ORDER[i]
-		h.add_child(_spawn_button(key, OS.get_keycode_string(EconomyData.SPAWN_KEYS[i])))
+	for i: int in UnitData.ALL_ORDER.size():
+		var key: String = UnitData.ALL_ORDER[i]
+		h.add_child(_spawn_button(key, EconomyData.SPAWN_KEY_LABELS[i]))
 
 
 func _spawn_button(key: String, hotkey: String) -> Button:
 	var s: Dictionary = UnitData.STATS[key]
 	var b: Button = Button.new()
-	b.custom_minimum_size = Vector2(82, 132)
+	b.custom_minimum_size = Vector2(64, 132)
 	b.focus_mode = Control.FOCUS_NONE
 	b.add_theme_stylebox_override("normal", _box(Color(0.14, 0.15, 0.18, 0.95), GOLD.darkened(0.4)))
 	b.add_theme_stylebox_override("hover", _box(Color(0.2, 0.21, 0.26, 0.98), GOLD))
@@ -215,17 +215,21 @@ func _spawn_button(key: String, hotkey: String) -> Button:
 	v.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 4)
 	var icon: TextureRect = TextureRect.new()
 	icon.texture = UnitIcons.make(self, key)
-	icon.custom_minimum_size = Vector2(72, 72)
+	icon.custom_minimum_size = Vector2(56, 56)
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	v.add_child(icon)
-	var name_l: Label = _label(String(s.name), 12, TEXT)
+	var name_l: Label = _label(String(s.name), 10, TEXT)
 	name_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	name_l.custom_minimum_size = Vector2(58, 28)
+	name_l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	name_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	v.add_child(name_l)
-	var cost: String = "%dg" % int(s.cost) + ("  pop %d" % int(s.pop) if int(s.pop) > 1 else "")
-	var cost_l: Label = _label(cost, 15, GOLD)
+	var cost: String = "%dg" % int(s.cost) + ("
+%d pop" % int(s.pop) if int(s.pop) > 1 else "")
+	var cost_l: Label = _label(cost, 14, GOLD)
 	cost_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	cost_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	v.add_child(cost_l)

@@ -58,6 +58,11 @@ func _ready() -> void:
 		var test: HeroAutotest = HeroAutotest.new()
 		test.battle = self
 		add_child(test)
+	if args.has("--units-test"):
+		spawner.enabled = false
+		var ut: UnitsAutotest = UnitsAutotest.new()
+		ut.battle = self
+		add_child(ut)
 	if args.has("--orders-test"):
 		spawner.enabled = false
 		var ot: OrdersAutotest = OrdersAutotest.new()

@@ -6,7 +6,7 @@ extends RefCounted
 ## [unit, first level it appears in the enemy army]
 const POOL_UNLOCK: Array = [
 	["swordsman", 1], ["spearman", 2], ["archer", 3], ["shield_knight", 4],
-	["mage", 6], ["assassin", 8], ["priest", 10],
+	["cavalry", 5], ["mage", 6], ["giant", 7], ["assassin", 8], ["catapult", 9], ["priest", 10],
 ]
 
 

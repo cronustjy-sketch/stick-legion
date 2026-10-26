@@ -8,4 +8,5 @@ const KILL_REWARD_FACTOR: float = 0.5  # killing an enemy pays this share of its
 const POP_CAP: int = 40
 
 ## Hotkeys for the spawn buttons, in the order of UnitData.HUMANOID_ORDER.
-const SPAWN_KEYS: Array[Key] = [KEY_Z, KEY_X, KEY_C, KEY_V, KEY_B, KEY_N, KEY_M]
+const SPAWN_KEYS: Array[Key] = [KEY_Z, KEY_X, KEY_C, KEY_V, KEY_B, KEY_N, KEY_M, KEY_COMMA, KEY_PERIOD, KEY_SLASH]
+const SPAWN_KEY_LABELS: Array[String] = ["Z", "X", "C", "V", "B", "N", "M", ",", ".", "/"]

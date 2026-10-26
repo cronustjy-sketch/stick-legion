@@ -48,3 +48,9 @@
   nearby enemies), Retreat (back to the gate, no fighting, heals 8% HP/s). New units obey the current order. Hold Tab for the tactical view: the camera
   rises high over the field, units show big gold/red discs, the hero stands still. Every enemy now has a health bar over its head (allies show one once hurt).
   Test: `godot --path . -- --orders-test` (prints ORDERS-TEST positions/healing, saves `screenshots/step7_*.png`).
+- **Step 8: All 10 unit types** — Swordsman, Archer (arrows on an arc, backs away from close enemies), Spearman (x2 vs big units), Shield Knight (35% armour,
+  frontal shield blocks arrows), Mage (fireball, 2.5 m splash), Assassin (30% crit x2), Priest (heals the most wounded friend/hero 16 HP), Giant (2.1x scale,
+  ground smash 3.2 m + knockback), Cavalry (horse + lance rider, first hit after a run-up deals x2), Catapult (boulders, 3 m splash, x2 vs fortresses).
+  Specials are driven by keys in `data/units.gd`; projectiles in `scripts/projectile.gd`; visuals via `VisualFactory` (stickman rig, `cavalry_model.gd`, `catapult_model.gd`).
+  HUD has all 10 spawn buttons (Z X C V B N M , . /); enemy levels bring cavalry (L5), giant (L7), catapult (L9).
+  Test: `godot --path . -- --units-test` (prints UNITS-TEST results, saves `screenshots/step8_*.png`).

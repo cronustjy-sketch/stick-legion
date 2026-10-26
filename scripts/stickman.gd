@@ -1,5 +1,5 @@
 class_name Stickman
-extends Node3D
+extends UnitVisual
 ## The one reusable stickman rig: a 16-bone Skeleton3D, ONE skinned mesh (one draw call + outline),
 ## and an AnimationPlayer with idle / walk / run / attack / block / hit / die.
 ## Every unit type is the same rig with different gear (see UnitData.LOOKS).

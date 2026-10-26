@@ -2,6 +2,8 @@ class_name Unit
 extends Node3D
 ## One soldier. Stats come from UnitData; the AI is deliberately simple and readable:
 ## pick the nearest enemy in aggro range (else march on the enemy fortress), walk until in range, hit on cooldown.
+## Player units also obey the army order (Charge / Hold / Follow / Retreat).
+## Unit specials (arrows, splash, healing, armour, smash, charge, ...) are driven by optional keys in UnitData.STATS.
 ## Implements the "hittable" interface (is_alive / nearest_point / hit_radius / take_damage) like Hero and Fortress.
 
 signal died(unit: Unit)
@@ -12,6 +14,7 @@ const THINK_INTERVAL: float = 0.25
 const AGGRO_RANGE: float = 16.0
 const SEPARATION_RADIUS: float = 1.1
 const BODY_FADE_TIME: float = 6.0
+const KITE_DISTANCE: float = 5.0
 
 var battle: Battle
 var key: String = "swordsman"
@@ -25,7 +28,28 @@ var cooldown: float = 0.9
 var hit_radius: float = 0.4
 var state: State = State.MOVE
 var target: Node
-var model: Stickman
+var model: UnitVisual
+var passive: bool = false  # tests: stands still, never thinks or attacks, but can be hurt
+
+# Specials (read from UnitData.STATS in setup)
+var ranged: String = ""
+var splash: float = 0.0
+var armor: float = 0.0
+var blocks_arrows: bool = false
+var is_big: bool = false
+var heal_amount: float = 0.0
+var crit_chance: float = 0.0
+var crit_mult: float = 2.0
+var bonus_vs_big: float = 1.0
+var charge_mult: float = 1.0
+var aoe_radius: float = 0.0
+var knockback: float = 0.0
+var fortress_mult: float = 1.0
+var projectile_speed: float = 20.0
+var kites: bool = false
+var aggro: float = AGGRO_RANGE
+
+var slot: int = 0  # formation slot (player units)
 
 var _think_t: float = 0.0
 var _cd: float = 0.0
@@ -33,10 +57,11 @@ var _attack_t: float = 0.0
 var _struck: bool = false
 var _strike_time: float = 0.34
 var _anim_speed: float = 1.0
+var _attack_anim: StringName = &"attack"
 var _neighbors: Array[Unit] = []
-var slot: int = 0  # formation slot (player units)
 var _goal: Vector3 = Vector3.ZERO
 var _has_goal: bool = false
+var _run_dist: float = 99.0  # distance travelled since the last attack (cavalry charge)
 var _hp_bar: HpBar3D
 var _marker: MeshInstance3D
 
@@ -52,13 +77,31 @@ func setup(unit_key: String, team_id: int, strength: float = 1.0) -> void:
 	attack_range = float(s.range)
 	speed = float(s.speed)
 	cooldown = float(s.cooldown)
-	var style: String = String(UnitData.LOOKS[unit_key].style)
-	var timing: Dictionary = UnitData.ATTACK_TIMING[style]
+	hit_radius = float(s.get("radius", 0.4))
+	ranged = String(s.get("ranged", ""))
+	splash = float(s.get("splash", 0.0))
+	armor = float(s.get("armor", 0.0))
+	blocks_arrows = bool(s.get("blocks_arrows", false))
+	is_big = bool(s.get("big", false))
+	heal_amount = float(s.get("heal", 0.0)) * strength
+	crit_chance = float(s.get("crit", 0.0))
+	crit_mult = float(s.get("crit_mult", 2.0))
+	bonus_vs_big = float(s.get("bonus_vs_big", 1.0))
+	charge_mult = float(s.get("charge_mult", 1.0))
+	aoe_radius = float(s.get("aoe", 0.0))
+	knockback = float(s.get("knockback", 0.0))
+	fortress_mult = float(s.get("fortress_mult", 1.0))
+	projectile_speed = float(s.get("projectile_speed", 20.0))
+	kites = bool(s.get("kite", false))
+	if ranged != "":
+		aggro = maxf(AGGRO_RANGE, attack_range * 0.9)
+	var look: Dictionary = UnitData.LOOKS[unit_key]
+	var timing: Dictionary = UnitData.ATTACK_TIMING[String(look.get("timing", look.style))]
+	_attack_anim = StringName(look.get("attack_anim", "attack"))
 	_anim_speed = maxf(1.0, float(timing.length) / cooldown)
 	_strike_time = float(timing.strike) / _anim_speed
-	model = Stickman.new()
+	model = VisualFactory.create(unit_key, team_id)
 	model.name = "Model"
-	model.setup(unit_key, team_id)
 	add_child(model)
 	_think_t = randf() * THINK_INTERVAL
 	add_to_group("units_team%d" % team)
@@ -67,7 +110,7 @@ func setup(unit_key: String, team_id: int, strength: float = 1.0) -> void:
 		add_to_group("hittable_enemy")  # the hero can hit enemy units
 	else:
 		slot = battle.army.next_slot()
-	_make_hp_bar()
+	_make_hp_bar(float(look.get("bar_height", 2.55 * float(look.scale))))
 	_make_marker()
 
 
@@ -82,7 +125,7 @@ func nearest_point(_from: Vector3) -> Vector3:
 func take_damage(amount: float, from_pos: Vector3 = Vector3.ZERO) -> void:
 	if state == State.DEAD:
 		return
-	hp -= amount
+	hp -= amount * (1.0 - armor)
 	_update_hp_bar()
 	if hp <= 0.0:
 		_die()
@@ -92,6 +135,13 @@ func take_damage(amount: float, from_pos: Vector3 = Vector3.ZERO) -> void:
 	# Being hit pulls attention to the attacker if it is close.
 	if from_pos != Vector3.ZERO and target == null:
 		_think_t = 0.0
+
+
+func heal(amount: float) -> void:
+	if state == State.DEAD:
+		return
+	hp = minf(hp + amount, max_hp)
+	_update_hp_bar()
 
 
 func _die() -> void:
@@ -110,7 +160,7 @@ func _die() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	if state == State.DEAD:
+	if state == State.DEAD or passive:
 		return
 	_cd -= delta
 	_think_t -= delta
@@ -133,6 +183,9 @@ func _physics_process(delta: float) -> void:
 	if state == State.ATTACK:
 		_update_attack(delta)
 		return
+	if kites and dist < KITE_DISTANCE and target is Unit:
+		_move(-to.normalized(), delta, 0.9)  # archers and mages back away from enemies that get too close
+		return
 	if dist <= attack_range:
 		if _cd <= 0.0:
 			_start_attack()
@@ -146,7 +199,7 @@ func _start_attack() -> void:
 	state = State.ATTACK
 	_attack_t = 0.0
 	_struck = false
-	model.play("attack", _anim_speed, true)
+	model.play(_attack_anim, _anim_speed, true)
 
 
 func _update_attack(delta: float) -> void:
@@ -159,6 +212,20 @@ func _update_attack(delta: float) -> void:
 		state = State.MOVE
 
 
+# --- Attacks and specials -----------------------------------------------------------------------------
+
+## Damage this unit would deal to `t` right now (spear vs big, charge, ...). Crits are rolled separately.
+func damage_against(t: Node) -> float:
+	var d: float = damage
+	if t is Unit and (t as Unit).is_big:
+		d *= bonus_vs_big
+	if t is Fortress:
+		d *= fortress_mult
+	if charge_mult > 1.0 and _run_dist >= 6.0:
+		d *= charge_mult
+	return d
+
+
 func _deal_damage() -> void:
 	if target == null or not _target_alive():
 		return
@@ -166,7 +233,45 @@ func _deal_damage() -> void:
 	to.y = 0.0
 	if to.length() - _target_radius() > attack_range * 1.6 + 0.4:
 		return  # target slipped away
-	target.call("take_damage", damage, global_position)
+	if heal_amount > 0.0:
+		target.call("heal", heal_amount)
+		return
+	if ranged != "":
+		Projectile.fire(battle, ranged, team, global_position + Vector3(0.0, 1.5, 0.0), target, damage, splash, projectile_speed, fortress_mult)
+		return
+	var d: float = damage_against(target)
+	if crit_chance > 0.0 and randf() < crit_chance:
+		d *= crit_mult
+	_run_dist = 0.0
+	if aoe_radius > 0.0:
+		_smash(d)
+		return
+	target.call("take_damage", d, global_position)
+
+
+## The giant's ground smash: hits everything near the target and shoves enemy units back.
+func _smash(d: float) -> void:
+	var centre: Vector3 = _target_point()
+	for n: Node in get_tree().get_nodes_in_group("units_team%d" % (1 - team)):
+		var u: Unit = n as Unit
+		if u.global_position.distance_to(centre) <= aoe_radius + u.hit_radius:
+			u.take_damage(d, global_position)
+			if u.is_alive() and not u.is_big:
+				var away: Vector3 = u.global_position - global_position
+				away.y = 0.0
+				if away.length() < 0.01:
+					away = Vector3.FORWARD
+				var p: Vector3 = u.global_position + away.normalized() * knockback
+				p.y = battle.terrain.height_at(p.x, p.z)
+				var tw: Tween = u.create_tween()
+				tw.tween_property(u, "global_position", p, 0.25).set_ease(Tween.EASE_OUT)
+	if team == 1 and battle.hero.is_alive() and battle.hero.global_position.distance_to(centre) <= aoe_radius + 0.6:
+		battle.hero.take_damage(d, global_position)
+	if target is Fortress:
+		pass  # the fortress already took its hit through damage_against below
+	var fort: Fortress = battle.enemy_fortress if team == 0 else battle.player_fortress
+	if target == fort:
+		fort.take_damage(d, global_position)
 
 
 func _move(dir: Vector3, delta: float, speed_mult: float = 1.0) -> void:
@@ -184,13 +289,19 @@ func _move(dir: Vector3, delta: float, speed_mult: float = 1.0) -> void:
 	p.x = clampf(p.x, -(BattlefieldData.VALLEY_HALF_WIDTH + 4.0), BattlefieldData.VALLEY_HALF_WIDTH + 4.0)
 	p.z = clampf(p.z, -(BattlefieldData.FORTRESS_Z + 10.0), BattlefieldData.FORTRESS_Z + 10.0)
 	p.y = battle.terrain.height_at(p.x, p.z)
+	_run_dist += global_position.distance_to(p)
 	global_position = p
-	model.play("run" if speed * speed_mult > 4.5 else "walk", clampf(speed * speed_mult / 3.2, 0.7, 1.4))
+	var eff: float = speed * speed_mult
+	model.play("run" if eff > 4.5 else "walk", clampf(eff / 3.2, 0.7, 1.4))
 
 
 # --- AI -----------------------------------------------------------------------------------------------
 
 func _think() -> void:
+	if heal_amount > 0.0:
+		_think_support()
+		_collect_neighbors()
+		return
 	var best: Node = null
 	var best_d: float = INF
 	for n: Node in get_tree().get_nodes_in_group("units_team%d" % (1 - team)):
@@ -212,12 +323,65 @@ func _think() -> void:
 		if _edge_dist(target) <= best_d + 2.0:
 			best = target
 			best_d = _edge_dist(target)
-	if best != null and best_d <= AGGRO_RANGE:
+	if best != null and best_d <= aggro:
 		target = best
 	else:
-		var fort: Fortress = battle.enemy_fortress if team == 0 else battle.player_fortress
+		var fort: Fortress = battle.player_fortress
 		target = fort if fort.is_alive() else null
 	_collect_neighbors()
+
+
+## Priests look for the most wounded friend (hero included); otherwise they stay with the army.
+func _think_support() -> void:
+	var best: Node = null
+	var best_missing: float = 0.0
+	for n: Node in get_tree().get_nodes_in_group("units_team%d" % team):
+		var u: Unit = n as Unit
+		var missing: float = u.max_hp - u.hp
+		if u != self and missing > best_missing and missing > u.max_hp * 0.08 and _edge_dist(u) <= 18.0:
+			best_missing = missing
+			best = u
+	if team == 0 and battle.hero.is_alive():
+		var hm: float = battle.hero.max_hp - battle.hero.hp
+		if hm > best_missing and hm > battle.hero.max_hp * 0.08 and _edge_dist(battle.hero) <= 18.0:
+			best = battle.hero
+	_has_goal = false
+	if best != null:
+		target = best
+		return
+	target = null
+	if team == 0:
+		var o: ArmyManager.Order = battle.army.order
+		if o == ArmyManager.Order.HOLD:
+			_goal = _hold_point()
+		elif o == ArmyManager.Order.FOLLOW:
+			_goal = _follow_point()
+		elif o == ArmyManager.Order.RETREAT:
+			_goal = _retreat_point()
+		else:
+			_goal = _front_friend_point()
+		_has_goal = true
+	else:
+		_goal = _front_friend_point()
+		_has_goal = true
+
+
+## A point just behind the friendly unit that is furthest toward the enemy (priests trail the army).
+func _front_friend_point() -> Vector3:
+	var best: Node3D = null
+	var best_progress: float = -INF
+	for n: Node in get_tree().get_nodes_in_group("units_team%d" % team):
+		var u: Unit = n as Unit
+		if u == self or u.heal_amount > 0.0:
+			continue
+		var progress: float = -u.global_position.z if team == 0 else u.global_position.z
+		if progress > best_progress:
+			best_progress = progress
+			best = u
+	if best == null:
+		return global_position
+	var back: Vector3 = Vector3(0.0, 0.0, 2.5 if team == 0 else -2.5)
+	return best.global_position + back
 
 
 ## Friends close enough to need spacing.
@@ -280,7 +444,7 @@ func _think_player_order(best: Node, best_d: float) -> void:
 	_has_goal = false
 	var o: ArmyManager.Order = battle.army.order
 	if o == ArmyManager.Order.CHARGE:
-		if best != null and best_d <= AGGRO_RANGE:
+		if best != null and best_d <= aggro:
 			target = best
 		else:
 			var fort: Fortress = battle.enemy_fortress
@@ -291,10 +455,10 @@ func _think_player_order(best: Node, best_d: float) -> void:
 	match o:
 		ArmyManager.Order.HOLD:
 			anchor = _hold_point()
-			engage = best != null and best_d <= 9.0 and (best as Node3D).global_position.distance_to(anchor) <= 16.0
+			engage = best != null and best_d <= maxf(9.0, aggro * 0.6) and (best as Node3D).global_position.distance_to(anchor) <= 16.0 + aggro * 0.4
 		ArmyManager.Order.FOLLOW:
 			anchor = _follow_point()
-			engage = best != null and best_d <= 7.0 and (best as Node3D).global_position.distance_to(battle.hero.global_position) <= 14.0
+			engage = best != null and best_d <= maxf(7.0, aggro * 0.5) and (best as Node3D).global_position.distance_to(battle.hero.global_position) <= 14.0 + aggro * 0.4
 		_:
 			anchor = _retreat_point()
 	if engage:
@@ -327,11 +491,11 @@ func _heal_while_retreating(delta: float) -> void:
 
 # --- Health bar above the head + tactical marker ---------------------------------------------------------
 
-func _make_hp_bar() -> void:
+func _make_hp_bar(height: float) -> void:
 	_hp_bar = HpBar3D.new()
 	_hp_bar.name = "HpBar"
-	_hp_bar.setup(Vector2(1.15, 0.15), BattlefieldData.COLOR_RED if team == 1 else BattlefieldData.COLOR_GOLD)
-	_hp_bar.position = Vector3(0.0, 2.55 * float(UnitData.LOOKS[key].scale), 0.0)
+	_hp_bar.setup(Vector2(1.15, 0.15) * maxf(1.0, height / 2.8), BattlefieldData.COLOR_RED if team == 1 else BattlefieldData.COLOR_GOLD)
+	_hp_bar.position = Vector3(0.0, height, 0.0)
 	add_child(_hp_bar)
 	_update_hp_bar()
 

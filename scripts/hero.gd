@@ -335,3 +335,10 @@ func respawn_remaining() -> float:
 	if state != State.DEAD:
 		return 0.0
 	return maxf(float(HeroData.STATS.respawn_time) - _dead_t, 0.0)
+
+
+func heal(amount: float) -> void:
+	if state == State.DEAD:
+		return
+	hp = minf(hp + amount, max_hp)
+	hp_changed.emit(hp, max_hp)

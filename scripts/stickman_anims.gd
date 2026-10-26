@@ -22,6 +22,10 @@ static var _cache: Dictionary = {}
 static func library(style: String) -> AnimationLibrary:
 	if _cache.has(style):
 		return _cache[style]
+	if style == "ride":
+		var rl: AnimationLibrary = _ride_library()
+		_cache[style] = rl
+		return rl
 	var lib: AnimationLibrary = AnimationLibrary.new()
 	lib.add_animation("idle", _idle())
 	lib.add_animation("walk", _locomotion(1.0, 12, 26.0, 45.0, 30.0, 16.0, 55.0, 3.0, 0.03, 4.0))
@@ -239,3 +243,45 @@ static func _roll() -> Animation:
 		keys.append([s[0], _pose(p)])
 	keys.append([0.6, _pose({})])
 	return _make(0.6, false, keys)
+
+
+# --- Riding (cavalry rider): legs stay seated astride the horse, the arms do the work --------------------
+
+static func _seated(over: Dictionary = {}) -> Dictionary:
+	var p: Dictionary = _pose({
+		"ThighL": Vector3(78, 0, -24), "ThighR": Vector3(78, 0, 24),
+		"KneeL": Vector3(-85, 0, 0), "KneeR": Vector3(-85, 0, 0),
+		"FootL": Vector3(15, 0, 0), "FootR": Vector3(15, 0, 0),
+		"ShoulderL": Vector3(50, 0, -8), "ElbowL": Vector3(40, 0, 0),
+	})
+	p.merge(over, true)
+	return p
+
+
+static func _ride_library() -> AnimationLibrary:
+	var lib: AnimationLibrary = AnimationLibrary.new()
+	var calm_a: Dictionary = _seated({"Hips_pos": Vector3(0, 0.0, 0)})
+	var calm_b: Dictionary = _seated({"Hips_pos": Vector3(0, -0.012, 0), "Spine": Vector3(1, 0, 0)})
+	lib.add_animation("idle", _make(2.0, true, [[0.0, calm_a], [1.0, calm_b], [2.0, calm_a]]))
+	var trot_a: Dictionary = _seated({"Hips_pos": Vector3(0, 0.0, 0), "Spine": Vector3(-3, 0, 0)})
+	var trot_b: Dictionary = _seated({"Hips_pos": Vector3(0, -0.05, 0), "Spine": Vector3(-5, 0, 0)})
+	lib.add_animation("walk", _make(0.8, true, [[0.0, trot_a], [0.4, trot_b], [0.8, trot_a]]))
+	var gal_a: Dictionary = _seated({"Hips_pos": Vector3(0, 0.02, 0), "Spine": Vector3(-14, 0, 0), "Head": Vector3(8, 0, 0)})
+	var gal_b: Dictionary = _seated({"Hips_pos": Vector3(0, -0.08, 0), "Spine": Vector3(-18, 0, 0), "Head": Vector3(10, 0, 0)})
+	lib.add_animation("run", _make(0.45, true, [[0.0, gal_a], [0.225, gal_b], [0.45, gal_a]]))
+	# Lance thrust: pull back, then drive the lance forward (lance pitch = shoulder + elbow + hand).
+	var back: Dictionary = _seated({"ShoulderR": Vector3(10, 0, 8), "ElbowR": Vector3(70, 0, 0), "HandR": Vector3(-60, 0, 0),
+		"Spine": Vector3(-4, -22, 0)})
+	var thrust: Dictionary = _seated({"ShoulderR": Vector3(80, 0, 4), "ElbowR": Vector3(5, 0, 0), "HandR": Vector3(-65, 0, 0),
+		"Spine": Vector3(-10, 24, 0)})
+	lib.add_animation("attack", _make(0.9, false, [[0.0, _seated()], [0.28, back], [0.42, thrust], [0.58, thrust], [0.9, _seated()]]))
+	var guard: Dictionary = _seated({"ShoulderR": Vector3(60, 0, 14), "ElbowR": Vector3(80, 0, 0), "HandR": Vector3(-55, 0, 0)})
+	lib.add_animation("block", _make(0.3, false, [[0.0, _seated()], [0.2, guard], [0.3, guard]]))
+	var flinch: Dictionary = _seated({"Spine": Vector3(18, 0, 8), "Head": Vector3(-16, 0, 0), "ShoulderL": Vector3(70, 0, -25)})
+	lib.add_animation("hit", _make(0.45, false, [[0.0, _seated()], [0.09, flinch], [0.45, _seated()]]))
+	var slump: Dictionary = _seated({"Spine": Vector3(35, 0, 10), "Head": Vector3(-25, 0, 0), "ShoulderR": Vector3(20, 0, 40), "ShoulderL": Vector3(20, 0, -40)})
+	lib.add_animation("die", _make(0.8, false, [[0.0, _seated()], [0.5, slump], [0.8, slump]]))
+	lib.add_animation("attack2", _make(0.9, false, [[0.0, _seated()], [0.9, _seated()]]))
+	lib.add_animation("attack3", _make(0.9, false, [[0.0, _seated()], [0.9, _seated()]]))
+	lib.add_animation("roll", _make(0.5, false, [[0.0, _seated()], [0.5, _seated()]]))
+	return lib
