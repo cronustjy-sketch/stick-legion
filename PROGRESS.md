@@ -123,3 +123,7 @@
 - **Fix: camera turning when the joystick moves (phones)** — phone browsers add an emulated mouse motion to every finger drag; if the pointer counted as "captured" (e.g. after closing the pause menu) the
   joystick finger spun the camera. The camera now ignores mouse motion whenever touch controls are active, and the pause menu no longer captures the pointer on phones. Test: `battle.tscn -- --touch --joy-test`
   (before: pitch moved -25 deg while the joystick moved; after: 0).
+- **Language (English / 中文) and sound on/off** — Settings has a Language list (English, 中文) and a Sound On/Off button (mutes everything), both saved. Every UI string goes through `Loc.t()` / `Loc.f()`;
+  the Chinese text is in `data/translations.gd` (HUD, menus, settings, level and chapter names, unit and skill names, all story cards, boss names and taunts). Picking a language in the main menu or map rebuilds the screen
+  at once; in a battle's pause menu it applies to the next screen. A bundled subset of Noto Sans SC (`ui/fonts/cjk_subset.ttf`, 197 KB, OFL licence) is the fallback font, so Chinese shows in browsers too.
+  `?lang=zh` in the web address opens the game in Chinese. Tests: add `--lang=zh` (e.g. `godot --path . -- --lang=zh --menu-test`). CLAUDE.md now says English by default with a Chinese option.

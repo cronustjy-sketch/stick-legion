@@ -131,7 +131,7 @@ func _apply(def: Dictionary) -> void:
 		battle.fx.ring(hero.global_position, float(def.get("ring", hr)), Color("6fe08a"), 0.7)
 	if float(def.get("buff", 0.0)) > 0.0 and battle != null:
 		battle.army.apply_buff(float(def.buff), float(def.buff_time))
-		battle.army.message.emit("%s! Army damage +%d%% for %ds" % [def.name, roundi((float(def.buff) - 1.0) * 100.0), int(def.buff_time)])
+		battle.army.message.emit(Loc.t("%s! Army damage +%d%% for %ds") % [Loc.t(def.name), roundi((float(def.buff) - 1.0) * 100.0), int(def.buff_time)])
 	if battle != null:
 		battle.fx.shake(float(def.get("shake", 0.1)), 0.35)
 

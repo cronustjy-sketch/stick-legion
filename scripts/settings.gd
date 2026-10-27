@@ -12,15 +12,27 @@ static var sfx: float = 0.8
 static var quality: int = 2  # 0 low, 1 medium, 2 high
 static var fullscreen: bool = false
 static var mouse_sens: float = 1.0
+static var language: String = "en"  # "en" or "zh"
+static var sound_on: bool = true
 static var touch: int = 0  # touch controls: 0 automatic (phones), 1 always on, 2 off
 
 static var revision: int = 0
 static var _loaded: bool = false
+static var _lang_forced: bool = false
 
 
 static func init() -> void:
 	if not _loaded:
 		_loaded = true
+		for a: String in OS.get_cmdline_user_args():  # tests: "--lang=zh" starts in Chinese without touching the saved settings
+			if a.begins_with("--lang="):
+				language = a.get_slice("=", 1)
+				_lang_forced = true
+		if OS.has_feature("web"):  # "?lang=zh" in the address opens the game in Chinese
+			var q: String = str(JavaScriptBridge.eval("new URLSearchParams(location.search).get('lang') || ''", true))
+			if q == "zh" or q == "en":
+				language = q
+				_lang_forced = true
 		var cfg: ConfigFile = ConfigFile.new()
 		if cfg.load(PATH) == OK:
 			master = float(cfg.get_value("audio", "master", master))
@@ -30,6 +42,9 @@ static func init() -> void:
 			fullscreen = bool(cfg.get_value("graphics", "fullscreen", fullscreen))
 			mouse_sens = clampf(float(cfg.get_value("controls", "mouse_sens", mouse_sens)), 0.3, 3.0)
 			touch = clampi(int(cfg.get_value("controls", "touch", touch)), 0, 2)
+			if not _lang_forced:
+				language = String(cfg.get_value("general", "language", language))
+			sound_on = bool(cfg.get_value("audio", "sound_on", sound_on))
 	apply()
 
 
@@ -42,6 +57,9 @@ static func save() -> void:
 	cfg.set_value("graphics", "fullscreen", fullscreen)
 	cfg.set_value("controls", "mouse_sens", mouse_sens)
 	cfg.set_value("controls", "touch", touch)
+	if not _lang_forced:  # a test run that forces a language must not overwrite the saved choice
+		cfg.set_value("general", "language", language)
+	cfg.set_value("audio", "sound_on", sound_on)
 	cfg.save(PATH)
 
 
@@ -49,7 +67,8 @@ static func save() -> void:
 static func apply() -> void:
 	_ensure_bus("Music")
 	_ensure_bus("SFX")
-	_set_bus("Master", master)
+	_set_bus("Master", master if sound_on else 0.0)
+	_install_cjk_font()
 	_set_bus("Music", music)
 	_set_bus("SFX", sfx)
 	if not OS.has_feature("web") and DisplayServer.get_name() != "headless":
@@ -87,3 +106,20 @@ static func _set_bus(bus_name: String, linear: float) -> void:
 		return
 	AudioServer.set_bus_mute(idx, linear <= 0.001)
 	AudioServer.set_bus_volume_db(idx, linear_to_db(maxf(linear, 0.0001)))
+
+
+static var _cjk_added: bool = false
+
+
+## Adds the bundled Chinese font as a fallback to the default font, so Chinese text shows on every platform (browsers have no system fonts).
+static func _install_cjk_font() -> void:
+	if _cjk_added:
+		return
+	var f: FontFile = load("res://ui/fonts/cjk_subset.ttf") as FontFile
+	if f == null:
+		return
+	_cjk_added = true
+	var base: Font = ThemeDB.fallback_font
+	var fb: Array[Font] = base.fallbacks.duplicate()
+	fb.append(f)
+	base.fallbacks = fb

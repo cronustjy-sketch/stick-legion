@@ -170,7 +170,7 @@ func _build_ui() -> void:
 	var by: Label = UiStyle.label("Created by Junyuan", 22, UiStyle.TEXT)
 	root.add_child(by)
 	by.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT, Control.PRESET_MODE_MINSIZE, 24)
-	var endings: Label = UiStyle.label("Endings  %d / 2" % GameState.endings.size(), 22, UiStyle.GOLD)
+	var endings: Label = UiStyle.label(Loc.f("Endings  %d / 2", [GameState.endings.size()]), 22, UiStyle.GOLD)
 	root.add_child(endings)
 	endings.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT, Control.PRESET_MODE_MINSIZE, 24)
 	_story_panel = UiStyle.panel(root)
@@ -239,7 +239,8 @@ func _run_test() -> void:
 	var sliders: Array[Node] = _settings_panel.find_children("*", "HSlider", true, false)
 	(sliders[0] as HSlider).value = 0.4
 	(sliders[1] as HSlider).value = 0.25
-	var opt: OptionButton = _settings_panel.find_children("*", "OptionButton", true, false)[0] as OptionButton
+	var opts: Array[Node] = _settings_panel.find_children("*", "OptionButton", true, false)
+	var opt: OptionButton = opts[1] as OptionButton  # the graphics quality list (the first one is the language)
 	opt.select(0)
 	opt.item_selected.emit(0)
 	await get_tree().create_timer(0.3).timeout

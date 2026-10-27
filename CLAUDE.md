@@ -6,7 +6,7 @@ while you **command a stickman army** that spawns from your fortress and fights 
 Destroy the enemy fortress to win. Lose if your fortress falls or your hero runs out of lives.
 
 This is a NEW game, separate from Ink Blade. Never edit any other project.
-Creator credit in-game must read **"Junyuan"**. UI text: English only.
+Creator credit in-game must read **"Junyuan"**. UI text: English by default, with a Chinese (Simplified) option in Settings (all text goes through `Loc.t()`; Chinese strings live in `data/translations.gd`, the bundled font in `ui/fonts/`).
 
 ## Engine and target
 - **Godot 4.7.2**, standard build, **GDScript only**, static typing (`var hp: float = 60.0`).

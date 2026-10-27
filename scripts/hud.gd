@@ -64,7 +64,7 @@ func _ready() -> void:
 	_toast.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(_toast)
 	_anchor(_toast, 0.5, 1.0, 190.0)
-	_level_label = _label("Level %d" % battle.level, 22, TEXT)
+	_level_label = _label(Loc.f("Level %d", [battle.level]), 22, TEXT)
 	root.add_child(_level_label)
 	_anchor(_level_label, 0.5, 0.0, 92.0)
 	_respawn_label = _label("", 34, RED)
@@ -110,7 +110,7 @@ func _process(_delta: float) -> void:
 	_update_boss_bar()
 	_update_skills()
 	var wait: float = battle.hero.respawn_remaining()
-	_respawn_label.text = "Respawning in %d" % ceili(wait) if wait > 0.0 else ""
+	_respawn_label.text = Loc.f("Respawning in %d", [ceili(wait)]) if wait > 0.0 else ""
 	for key: String in _buttons:
 		var affordable: bool = battle.army.why_not(key) == ""
 		var b: Button = _buttons[key].button
@@ -118,8 +118,8 @@ func _process(_delta: float) -> void:
 		b.modulate = Color.WHITE if affordable else (Color(0.4, 0.4, 0.45, 0.85) if locked else Color(0.55, 0.55, 0.55, 0.9))
 		var cl: Label = _buttons[key].cost
 		var s: Dictionary = UnitData.STATS[key]
-		cl.text = ("Level %d" % LevelData.unit_unlock(key)) if locked else ("%dg" % int(s.cost) + ("
-%d pop" % int(s.pop) if int(s.pop) > 1 else ""))
+		cl.text = Loc.f("Level %d", [LevelData.unit_unlock(key)]) if locked else (Loc.f("%dg", [int(s.cost)]) + (Loc.f("
+%d pop", [int(s.pop)]) if int(s.pop) > 1 else ""))
 
 
 func show_toast(text: String) -> void:
@@ -135,28 +135,28 @@ func show_toast(text: String) -> void:
 # --- Updates ------------------------------------------------------------------------------------------
 
 func _on_gold(g: int) -> void:
-	_gold_label.text = "Gold  %d" % g
+	_gold_label.text = Loc.f("Gold  %d", [g])
 
 
 func _on_pop(used: int, cap: int) -> void:
-	_pop_label.text = "Army  %d / %d" % [used, cap]
+	_pop_label.text = Loc.f("Army  %d / %d", [used, cap])
 	_pop_label.add_theme_color_override("font_color", RED if used >= cap else TEXT)
 
 
 func _set_fort(bar: ProgressBar, label: Label, title: String, cur: float, maximum: float) -> void:
 	bar.max_value = maximum
 	bar.value = cur
-	label.text = "%s   %d / %d" % [title, ceili(cur), int(maximum)]
+	label.text = "%s   %d / %d" % [Loc.t(title), ceili(cur), int(maximum)]
 
 
 func _on_hero_hp(cur: float, maximum: float) -> void:
 	_hero_bar.max_value = maximum
 	_hero_bar.value = cur
-	_hero_label.text = "Aldric   %d / %d" % [ceili(cur), int(maximum)]
+	_hero_label.text = Loc.f("Aldric   %d / %d", [ceili(cur), int(maximum)])
 
 
 func _on_lives(lives: int) -> void:
-	_lives_label.text = "Lives  %d" % lives
+	_lives_label.text = Loc.f("Lives  %d", [lives])
 
 
 # --- Layout -------------------------------------------------------------------------------------------
@@ -214,7 +214,7 @@ func _build_top_right(root: Control) -> void:
 	var text: String = "WASD move   Shift sprint   Space roll\nLeft click attack   Right click block\nQ E R F skills   G ultimate (full rage)\n1-4 army orders   Hold Tab: tactical view\nZ X C V B N M , . /  buy units\nEsc pause   Hold Alt: use the mouse"
 	if touch:
 		text = "Left stick: move (push to the edge to sprint)\nAttack / Roll / Block buttons\nDrag the right side to look around\nTap skills, orders and units\nMap: tactical view   II: pause"
-	p.add_child(_label(text, 14, DIM))
+	p.add_child(_label(Loc.t(text), 14, DIM))
 	# The controls are shown for the first 10 seconds of level 1; the "?" button brings them back.
 	_hint_panel.visible = false
 	if battle.level == 1:
@@ -236,7 +236,7 @@ func _build_bottom_left(root: Control) -> void:
 	_anchor(p, 0.0, 1.0, 14.0)
 	var v: VBoxContainer = VBoxContainer.new()
 	p.add_child(v)
-	_hero_label = _label("Aldric", 18, TEXT)
+	_hero_label = _label(Loc.t("Aldric"), 18, TEXT)
 	_hero_bar = _bar(Color("5fc46a"), Vector2(200, 18))
 	_lives_label = _label("Lives  3", 16, GOLD)
 	v.add_child(_hero_label)
@@ -275,7 +275,7 @@ func _spawn_button(key: String, hotkey: String) -> Button:
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	v.add_child(icon)
-	var name_l: Label = _label(String(s.name), 10, TEXT)
+	var name_l: Label = _label(Loc.t(String(s.name)), 10, TEXT)
 	name_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	name_l.custom_minimum_size = Vector2(58, 28)
@@ -315,7 +315,7 @@ func _build_skills(root: Control) -> void:
 	var col: VBoxContainer = VBoxContainer.new()
 	col.alignment = BoxContainer.ALIGNMENT_CENTER
 	rage.add_child(col)
-	_rage_label = _label("Rage 0%", 14, Color("c996e8"))
+	_rage_label = _label(Loc.f("Rage %d%%", [0]), 14, Color("c996e8"))
 	col.add_child(_rage_label)
 	_rage_bar = _bar(Color("b86bd6"), Vector2(150, 16))
 	_rage_bar.max_value = 100.0
@@ -336,7 +336,7 @@ func _skill_slot(id: String, size: Vector2) -> Control:
 	c.add_child(key_l)
 	key_l.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
 	key_l.offset_top = 4.0
-	var name_l: Label = _label(String(def.name), 10, DIM)
+	var name_l: Label = _label(Loc.t(String(def.name)), 10, DIM)
 	name_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	c.add_child(name_l)
 	name_l.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
@@ -378,7 +378,7 @@ func _update_skills() -> void:
 		bg.add_theme_stylebox_override("panel", _box(Color(0.3, 0.25, 0.1, 0.95) if ready else Color(0.12, 0.12, 0.15, 0.92), GOLD if ready else DIM.darkened(0.3), 0, 8))
 		key_l.add_theme_color_override("font_color", Color("ffe9a8") if ready else DIM)
 	_rage_bar.value = sk.rage
-	_rage_label.text = "Rage %d%%  %s" % [int(100.0 * sk.rage / sk.rage_max()), "READY (G)" if sk.rage >= sk.rage_max() else ""]
+	_rage_label.text = Loc.t("Rage %d%%  %s") % [int(100.0 * sk.rage / sk.rage_max()), Loc.t("READY (G)") if sk.rage >= sk.rage_max() else ""]
 
 
 # --- Widgets ------------------------------------------------------------------------------------------
@@ -447,10 +447,10 @@ func _build_orders(root: Control) -> void:
 	var v: VBoxContainer = VBoxContainer.new()
 	v.add_theme_constant_override("separation", 5)
 	p.add_child(v)
-	v.add_child(_label("Army orders", 14, DIM))
+	v.add_child(_label(Loc.t("Army orders"), 14, DIM))
 	for i: int in ArmyManager.ORDER_NAMES.size():
 		var b: Button = Button.new()
-		b.text = "%d  %s" % [i + 1, ArmyManager.ORDER_NAMES[i]]
+		b.text = "%d  %s" % [i + 1, Loc.t(ArmyManager.ORDER_NAMES[i])]
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		b.focus_mode = Control.FOCUS_NONE
 		b.custom_minimum_size = Vector2(150, 34)
@@ -504,8 +504,8 @@ func _build_boss_bar(root: Control) -> void:
 
 ## A short line of dialogue (boss taunts). Fades after a few seconds.
 func show_banner(speaker: String, text: String) -> void:
-	_banner_speaker.text = speaker
-	_banner_text.text = "\"%s\"" % text
+	_banner_speaker.text = Loc.t(speaker)
+	_banner_text.text = "\"%s\"" % Loc.t(text)
 	_banner.visible = true
 	_banner.modulate.a = 1.0
 	if _banner_tween != null:
@@ -526,7 +526,7 @@ func _update_boss_bar() -> void:
 		_boss_bars[shown].visible = true
 		_boss_bars[shown].max_value = b.max_hp
 		_boss_bars[shown].value = b.hp
-		_boss_labels[shown].text = "%s%s" % [b.boss_name, "   (enraged)" if b.phase >= 2 and b.def.thresholds.size() < 2 else ("   (phase %d)" % b.phase if b.def.thresholds.size() >= 2 else "")]
+		_boss_labels[shown].text = "%s%s" % [Loc.t(b.boss_name), Loc.t("   (enraged)") if b.phase >= 2 and b.def.thresholds.size() < 2 else (Loc.f("   (phase %d)", [b.phase]) if b.def.thresholds.size() >= 2 else "")]
 		shown += 1
 	for i: int in range(shown, 2):
 		_boss_labels[i].visible = false
@@ -537,4 +537,4 @@ func _update_boss_bar() -> void:
 func _on_shield_blocked() -> void:
 	if _shield_toast_cd <= 0.0:
 		_shield_toast_cd = 3.0
-		show_toast("The fortress is shielded! Defeat the boss first.")
+		show_toast(Loc.t("The fortress is shielded! Defeat the boss first."))

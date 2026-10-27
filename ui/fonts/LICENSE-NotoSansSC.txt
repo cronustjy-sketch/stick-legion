@@ -1,0 +1,2 @@
+cjk_subset.ttf is a subset (only the characters used by the game) of Noto Sans SC, Copyright 2014-2021 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'.
+Licensed under the SIL Open Font License, Version 1.1: https://openfontlicense.org

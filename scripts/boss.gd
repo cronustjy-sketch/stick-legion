@@ -67,7 +67,7 @@ func enter_phase(n: int) -> void:
 	if lines.has(phase):
 		battle.banner(boss_name, String(lines[phase]))
 	else:
-		battle.army.message.emit("%s is enraged!" % boss_name)
+		battle.army.message.emit(Loc.t("%s is enraged!") % Loc.t(boss_name))
 	if String(def.id) == "corvin":
 		if phase == 2:
 			_do_guards()

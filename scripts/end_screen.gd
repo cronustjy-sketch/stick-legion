@@ -37,7 +37,7 @@ func show_result(victory: bool, level: int) -> void:
 	var title: Label = _label(("CAMPAIGN COMPLETE" if finished else "VICTORY") if victory else "DEFEAT", 64 if not finished else 48, Color("e8b44a") if victory else Color("de4b3f"))
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(title)
-	var sub: Label = _label(("Level %d cleared. The enemy fortress has fallen." if victory else "Level %d lost. Your fortress fell or your hero is out of lives.") % level, 20, Color("f1ede2"))
+	var sub: Label = _label(Loc.t("Level %d cleared. The enemy fortress has fallen." if victory else "Level %d lost. Your fortress fell or your hero is out of lives.") % level, 20, Color("f1ede2"))
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(sub)
 	var row: HBoxContainer = HBoxContainer.new()
@@ -66,7 +66,7 @@ func _go(level: int) -> void:
 
 func _button(text: String, on_press: Callable) -> Button:
 	var b: Button = Button.new()
-	b.text = text
+	b.text = Loc.t(text)
 	b.name = text.replace(" ", "")
 	b.custom_minimum_size = Vector2(190, 56)
 	b.add_theme_font_size_override("font_size", 24)
@@ -76,7 +76,7 @@ func _button(text: String, on_press: Callable) -> Button:
 
 func _label(text: String, size: int, color: Color) -> Label:
 	var l: Label = Label.new()
-	l.text = text
+	l.text = Loc.t(text)
 	l.add_theme_font_size_override("font_size", size)
 	l.add_theme_color_override("font_color", color)
 	l.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))

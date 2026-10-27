@@ -43,13 +43,13 @@ func pop_of(key: String) -> int:
 ## Empty string when the unit can be bought, otherwise the reason it cannot.
 func why_not(key: String) -> String:
 	if battle.level < LevelData.unit_unlock(key) and not battle.unlock_all:
-		return "%s unlocks at level %d" % [UnitData.STATS[key].name, LevelData.unit_unlock(key)]
+		return Loc.t("%s unlocks at level %d") % [Loc.t(UnitData.STATS[key].name), LevelData.unit_unlock(key)]
 	if gold < cost_of(key):
-		return "Not enough gold"
+		return Loc.t("Not enough gold")
 	if pop_used + pop_of(key) > pop_cap:
-		return "Population full"
+		return Loc.t("Population full")
 	if not battle.player_fortress.is_alive():
-		return "Fortress destroyed"
+		return Loc.t("Fortress destroyed")
 	return ""
 
 
@@ -95,7 +95,7 @@ func set_order(o: Order) -> void:
 	order = o
 	Sfx.play("order", -4.0)
 	order_changed.emit(o)
-	message.emit("Order: " + ORDER_NAMES[o])
+	message.emit(Loc.f("Order: %s", [Loc.t(ORDER_NAMES[o])]))
 	get_tree().call_group("units_team0", "refresh_orders")
 
 

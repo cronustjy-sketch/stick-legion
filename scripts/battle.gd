@@ -430,7 +430,7 @@ func _on_boss_died(dead: Unit) -> void:
 			b.enter_phase(b.phase + 1)  # the twins: when one falls, the other enrages
 	if alive.is_empty():
 		enemy_fortress.set_shield(false)
-		army.message.emit("Boss defeated! The fortress shield is down!")
+		army.message.emit(Loc.t("Boss defeated! The fortress shield is down!"))
 		fx.shake(0.5, 0.8)
 		fx.ring(dead.global_position, 12.0, Color("ffd24a"), 0.8)
 		if String(def.get("defeated", "")) != "":

@@ -27,7 +27,7 @@ static func panel(parent: Node) -> PanelContainer:
 
 static func label(text: String, size: int, color: Color = TEXT) -> Label:
 	var l: Label = Label.new()
-	l.text = text
+	l.text = Loc.t(text)
 	l.add_theme_font_size_override("font_size", size)
 	l.add_theme_color_override("font_color", color)
 	l.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
@@ -37,7 +37,7 @@ static func label(text: String, size: int, color: Color = TEXT) -> Label:
 
 static func button(text: String, min_size: Vector2 = Vector2(260, 56), font_size: int = 24) -> Button:
 	var b: Button = Button.new()
-	b.text = text
+	b.text = Loc.t(text)
 	b.name = text.replace(" ", "")
 	b.custom_minimum_size = min_size
 	b.focus_mode = Control.FOCUS_NONE

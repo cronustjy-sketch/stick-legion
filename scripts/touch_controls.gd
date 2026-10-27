@@ -153,6 +153,6 @@ func _draw_controls() -> void:
 		_canvas.draw_circle(b.pos, float(b.r), col)
 		_canvas.draw_arc(b.pos, float(b.r), 0.0, TAU, 32, Color(1, 1, 1, 0.5), 3.0)
 		var size: int = 22 if float(b.r) > 40.0 else 15
-		var text: String = String(b.label)
+		var text: String = Loc.t(String(b.label))
 		var w: float = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
 		_canvas.draw_string(font, b.pos + Vector2(-w * 0.5, float(size) * 0.35), text, HORIZONTAL_ALIGNMENT_LEFT, -1, size, Color(1, 1, 1, 0.9))

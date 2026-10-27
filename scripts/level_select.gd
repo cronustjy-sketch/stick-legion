@@ -95,7 +95,7 @@ func _build() -> void:
 	_cleared_label = _label("", 20, GREEN)
 	add_child(_cleared_label)
 	_cleared_label.position = Vector2(24.0, 24.0)
-	var tip: Label = _label("Mira: \"%s\"" % StoryData.MIRA_TIPS[randi() % StoryData.MIRA_TIPS.size()], 18, Color("f6d98a"))
+	var tip: Label = _label(Loc.f("Mira: \"%s\"", [Loc.t(StoryData.MIRA_TIPS[randi() % StoryData.MIRA_TIPS.size()])]), 18, Color("f6d98a"))
 	add_child(tip)
 	tip.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP, Control.PRESET_MODE_MINSIZE, 108)
 	if GameState.endless_unlocked():
@@ -133,7 +133,7 @@ func _build() -> void:
 	col.add_child(_info_title)
 	col.add_child(_info_body)
 	_start = Button.new()
-	_start.text = "Start Level"
+	_start.text = Loc.t("Start Level")
 	_start.custom_minimum_size = Vector2(200.0, 64.0)
 	_start.add_theme_font_size_override("font_size", 26)
 	_start.focus_mode = Control.FOCUS_NONE
@@ -166,7 +166,7 @@ func _play() -> void:
 func _refresh() -> void:
 	var unlocked: int = mini(GameState.highest_unlocked, LevelData.LEVEL_COUNT)
 	var cleared: int = clampi(GameState.highest_unlocked - 1, 0, LevelData.LEVEL_COUNT)
-	_cleared_label.text = "Levels cleared: %d / %d" % [cleared, LevelData.LEVEL_COUNT]
+	_cleared_label.text = Loc.f("Levels cleared: %d / %d", [cleared, LevelData.LEVEL_COUNT])
 	for i: int in _buttons.size():
 		var lvl: int = i + 1
 		var boss: bool = LevelData.is_boss_level(lvl)
@@ -189,19 +189,19 @@ func _refresh() -> void:
 		_buttons[i].disabled = false
 	var st: Dictionary = LevelData.settings(selected)
 	var locked_sel: bool = selected > unlocked
-	var title: String = "Level %d  -  %s" % [selected, String(st.name)]
-	_chapter_label.text = "Chapter %d: %s" % [LevelData.chapter_of(selected), LevelData.chapter_name(selected)]
-	_info_title.text = title + ("   (locked)" if locked_sel else "")
+	var title: String = Loc.t("Level %d  -  %s") % [selected, Loc.t(String(st.name))]
+	_chapter_label.text = Loc.t("Chapter %d: %s") % [LevelData.chapter_of(selected), Loc.t(LevelData.chapter_name(selected))]
+	_info_title.text = title + (Loc.t("   (locked)") if locked_sel else "")
 	var names: PackedStringArray = PackedStringArray()
 	for k: String in st.pool:
-		names.append(String(UnitData.STATS[k].name))
+		names.append(Loc.t(String(UnitData.STATS[k].name)))
 	var lines: PackedStringArray = PackedStringArray()
-	lines.append("Enemy strength x%.2f     Enemy fortress %d HP" % [float(st.multiplier), int(float(st.fortress_hp))])
-	lines.append("Enemy army: " + ", ".join(names))
+	lines.append(Loc.t("Enemy strength x%.2f     Enemy fortress %d HP") % [float(st.multiplier), int(float(st.fortress_hp))])
+	lines.append(Loc.t("Enemy army: ") + ("、" if Loc.is_zh() else ", ").join(names))
 	if not (st.boss as Dictionary).is_empty():
-		lines.append("BOSS: %s  (the fortress is shielded until the boss falls)" % String((st.boss as Dictionary).name).replace("The ", "The "))
+		lines.append(Loc.t("BOSS: %s  (the fortress is shielded until the boss falls)") % Loc.t(String((st.boss as Dictionary).name)))
 	else:
-		lines.append("No boss on this level.")
+		lines.append(Loc.t("No boss on this level."))
 	_info_body.text = "\n".join(lines)
 	_info_title.add_theme_color_override("font_color", RED if not (st.boss as Dictionary).is_empty() else GOLD)
 	_start.disabled = locked_sel
@@ -243,7 +243,7 @@ func _draw_map() -> void:
 
 func _label(text: String, font_size: int, color: Color) -> Label:
 	var l: Label = Label.new()
-	l.text = text
+	l.text = Loc.t(text)
 	l.add_theme_font_size_override("font_size", font_size)
 	l.add_theme_color_override("font_color", color)
 	l.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))

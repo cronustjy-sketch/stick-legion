@@ -141,8 +141,8 @@ func _start_card(id: String) -> void:
 	_title.visible = _card.has("title")
 	_subtitle.visible = _card.has("title")
 	if _card.has("title"):
-		_title.text = String(_card.title)
-		var sub: String = String(_card.subtitle)
+		_title.text = Loc.t(String(_card.title))
+		var sub: String = Loc.t(String(_card.subtitle))
 		if bool(_card.get("credits", false)) and GameState.story_replay:
 			sub = ""
 		_subtitle.text = sub
@@ -191,10 +191,10 @@ func _on_skip() -> void:
 func _show_line() -> void:
 	var l: Array = (_card.lines as Array)[_line]
 	var who: String = String(l[0])
-	_speaker.text = who
+	_speaker.text = Loc.t(who)
 	_speaker.visible = who != ""
 	_speaker.add_theme_color_override("font_color", UiStyle.RED if who == "Corvin" or who == "Sera and Kade" else UiStyle.GOLD)
-	_text.text = String(l[1])
+	_text.text = Loc.t(String(l[1]))
 	_text.visible_ratio = 0.0
 	_typing = true
 	if _type_tween != null:

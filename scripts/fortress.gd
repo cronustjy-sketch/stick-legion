@@ -122,7 +122,7 @@ func _build() -> void:
 	_hp_bar.position = Vector3(0, kh + 7.0, 0)
 	add_child(_hp_bar)
 	var label: Label3D = Label3D.new()
-	label.text = "Player Fortress" if team == Team.PLAYER else "Enemy Fortress"
+	label.text = Loc.t("Player Fortress") if team == Team.PLAYER else Loc.t("Enemy Fortress")
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.fixed_size = true  # same on-screen size for both fortresses at any distance
 	label.font_size = 40
