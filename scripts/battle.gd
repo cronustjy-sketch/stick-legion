@@ -95,6 +95,9 @@ func _ready() -> void:
 	if args.has("--start-test"):
 		spawner.enabled = false
 		_run_start_test()
+	if args.has("--aim-test"):
+		spawner.enabled = false
+		_run_aim_test()
 	if args.has("--joy-test"):
 		spawner.enabled = false
 		_run_joy_test()
@@ -714,4 +717,57 @@ func _run_joy_test() -> void:
 	await get_tree().create_timer(0.3).timeout
 	print("JOY-TEST camera yaw changed by ", snappedf(rad_to_deg(hero_camera.yaw - yaw0), 0.01), " deg, pitch by ", snappedf(rad_to_deg(hero_camera.pitch - pitch0), 0.01), " deg while the joystick moved (expect 0 / 0); hero moved: ", hero.touch_move != Vector2.ZERO)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	get_tree().quit()
+
+
+## Auto aim and attack speed (godot ... battle.tscn -- --aim-test): enemies beside and behind the hero must be hit by a single press; holding attack must keep swinging.
+func _run_aim_test() -> void:
+	hero.mouse_gate = false
+	await get_tree().create_timer(0.8).timeout
+	var c: Vector3 = hero.global_position
+	for case: Array in [["beside (90 deg)", Vector3(3.0, 0.0, 0.0)], ["behind (180 deg)", Vector3(0.0, 0.0, 3.5)], ["far side (-100 deg)", Vector3(-2.6, 0.0, 0.8)]]:
+		hero.rotation.y = 0.0  # facing -Z
+		hero.state = Hero.State.FREE
+		var e: Unit = spawn_unit("swordsman", 1, 0.0)
+		e.passive = true
+		e.max_hp = 500.0
+		e.hp = 500.0
+		e.global_position = c + (case[1] as Vector3)
+		await get_tree().create_timer(0.2).timeout
+		var t: InputEventAction = InputEventAction.new()
+		t.action = "attack"
+		t.pressed = true
+		Input.parse_input_event(t)
+		await get_tree().create_timer(0.1).timeout
+		var to: Vector3 = e.global_position - hero.global_position
+		var facing: float = rad_to_deg(hero.forward_vector().angle_to(Vector3(to.x, 0.0, to.z).normalized()))
+		print("AIM-TEST enemy ", case[0], ": hero turned to face it instantly (error ", snappedf(facing, 0.1), " deg)")
+		var t2: InputEventAction = InputEventAction.new()
+		t2.action = "attack"
+		t2.pressed = false
+		Input.parse_input_event(t2)
+		await get_tree().create_timer(0.9).timeout
+		print("AIM-TEST   damage dealt by the first swing: ", int(500.0 - e.hp), " (expect 14)")
+		e.queue_free()
+		hero.state = Hero.State.FREE
+		await get_tree().create_timer(0.8).timeout
+	# Holding attack: count the swings in 3 seconds.
+	var dummy: Unit = spawn_unit("swordsman", 1, 0.0)
+	dummy.passive = true
+	dummy.max_hp = 100000.0
+	dummy.hp = 100000.0
+	dummy.global_position = c + Vector3(0.0, 0.0, -1.8)
+	hero.rotation.y = 0.0
+	var swings: Array[int] = [0]
+	hero.struck.connect(func(_h: int, _ci: int) -> void: swings[0] += 1)
+	var hold: InputEventAction = InputEventAction.new()
+	hold.action = "attack"
+	hold.pressed = true
+	Input.parse_input_event(hold)
+	await get_tree().create_timer(3.0).timeout
+	var rel: InputEventAction = InputEventAction.new()
+	rel.action = "attack"
+	rel.pressed = false
+	Input.parse_input_event(rel)
+	print("AIM-TEST holding attack for 3 s: ", swings[0], " swings landed (before the change: about 5)")
 	get_tree().quit()

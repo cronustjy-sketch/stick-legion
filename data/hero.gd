@@ -16,7 +16,7 @@ const STATS: Dictionary = {
 	"roll_cooldown": 0.45,
 	"attack_range": 2.7,
 	"attack_arc_deg": 120.0,
-	"attack_speed": 1.25,  # animation speed multiplier
+	"attack_speed": 1.6,  # animation speed multiplier (higher = faster swings)
 	"combo_reset": 0.55,  # seconds after a swing before the combo starts over
 	"block_reduction": 0.75,
 	"block_arc_deg": 140.0,

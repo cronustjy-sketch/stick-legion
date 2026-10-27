@@ -121,6 +121,7 @@ func _press(name: String, down: bool) -> void:
 	var hero: Hero = battle.hero
 	match name:
 		"attack":
+			hero.touch_attack_held = down
 			if down:
 				hero.touch_attack = true
 		"dodge":

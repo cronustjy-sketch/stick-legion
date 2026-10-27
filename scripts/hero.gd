@@ -35,10 +35,13 @@ var _roll_t: float = 0.0
 var _roll_cd: float = 0.0
 var _roll_dir: Vector3 = Vector3.FORWARD
 var _stun: float = 0.0
+var _aim_dist: float = 0.0  # edge distance to the enemy the last auto-aim picked (0 = none)
 var touch_active: bool = false  # on-screen controls feed the fields below
 var touch_move: Vector2 = Vector2.ZERO
 var touch_sprint: bool = false
 var touch_attack: bool = false
+var touch_attack_held: bool = false  # the on-screen Attack button is being held: keep swinging
+var attack_held: bool = false
 var touch_dodge: bool = false
 var touch_block: bool = false
 var mouse_gate: bool = true  # ignore attack/block unless the mouse is captured (so HUD clicks do not swing the sword)
@@ -105,9 +108,13 @@ func _tick(delta: float) -> void:
 	if mouse_gate and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		attack_pressed = false
 		block_held = false
+	attack_held = Input.is_action_pressed("attack") and (Input.mouse_mode == Input.MOUSE_MODE_CAPTURED or not mouse_gate)
+	if attack_held and not touch_active and state == State.FREE:
+		attack_pressed = true
 	if touch_active:
 		move_dir = Vector3(touch_move.x, 0.0, touch_move.y).rotated(Vector3.UP, cam_yaw)
-		attack_pressed = touch_attack
+		attack_pressed = touch_attack or (touch_attack_held and state == State.FREE)
+		attack_held = touch_attack_held
 		dodge_pressed = touch_dodge
 		block_held = touch_block
 		touch_attack = false
@@ -203,18 +210,22 @@ func _state_attack(delta: float, move_dir: Vector3, attack: bool, dodge: bool) -
 	var length: float = float(swing.length)
 	# Lunge forward into the swing, then settle.
 	if _attack_t < strike_t and _nearest_enemy_dist() > 1.4:
-		velocity = forward_vector() * float(swing.lunge) * (1.0 - _attack_t / strike_t * 0.5)
+		var lunge: float = float(swing.lunge) * (1.0 - _attack_t / strike_t * 0.5)
+		if _aim_dist > 1.8:  # magnetism: close the gap to the auto-aimed enemy before the blow lands
+			lunge = maxf(lunge, minf((_aim_dist - 1.7) / maxf((strike_t - _attack_t) / spd, 0.06), 13.0))
+		velocity = forward_vector() * lunge
 	else:
 		velocity = velocity.move_toward(Vector3.ZERO, 30.0 * delta)
 	if not _struck and _attack_t >= strike_t:
 		_struck = true
+		assist_aim()  # the enemy may have moved during the wind-up: snap to it right before the blow lands
 		_strike(float(swing.damage))
-	if attack and _attack_t > 0.05:  # buffered click: counts as soon as the swing has started
+	if (attack or attack_held) and _attack_t > 0.05:  # buffered click (or button held): counts as soon as the swing has started
 		_queued = true
 	if dodge and _struck and _roll_cd <= 0.0:
 		_start_roll(move_dir)
 		return
-	if _attack_t >= length * 0.88:
+	if _attack_t >= length * 0.72:  # chain into the next swing early: no dead time after the blow
 		if _queued and _combo < HeroData.COMBO.size() - 1:
 			_combo += 1
 			_start_attack()
@@ -353,20 +364,29 @@ func _nearest_enemy_dist() -> float:
 
 ## Light aim assist: swings turn towards the closest enemy in front of the hero.
 func assist_aim() -> void:
+	## Auto aim: on every swing the hero instantly turns to the best enemy within 6.5 m in ANY direction (beside or behind him too).
+	## Enemies in front win; a nearer one beside him beats a far one in front. Units are preferred to the fortress.
 	var fwd: Vector3 = forward_vector()
-	var best: float = 4.5
+	var best_score: float = INF
 	var best_dir: Vector3 = Vector3.ZERO
+	_aim_dist = 0.0
 	for n: Node in get_tree().get_nodes_in_group("hittable_enemy"):
 		if not n.call("is_alive") or n is Fortress:
 			continue
 		var to: Vector3 = (n.call("nearest_point", global_position) as Vector3) - global_position
 		to.y = 0.0
 		var d: float = to.length()
-		if d < best and d > 0.05 and fwd.dot(to / d) > cos(deg_to_rad(80.0)):
-			best = d
+		if d > 6.5 or d < 0.05:
+			continue
+		var ang: float = acos(clampf(fwd.dot(to / d), -1.0, 1.0))  # 0 = straight ahead, PI = behind
+		var score: float = d + ang * 0.9
+		if score < best_score:
+			best_score = score
 			best_dir = to / d
+			_aim_dist = maxf(d - float(n.get("hit_radius")), 0.0)
 	if best_dir != Vector3.ZERO:
 		rotation.y = atan2(-best_dir.x, -best_dir.z)
+		_face_yaw = rotation.y
 
 
 # --- "hittable" interface shared with Unit and Fortress (used by enemy AI) ---------------------------------

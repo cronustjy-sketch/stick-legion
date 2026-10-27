@@ -127,3 +127,6 @@
   the Chinese text is in `data/translations.gd` (HUD, menus, settings, level and chapter names, unit and skill names, all story cards, boss names and taunts). Picking a language in the main menu or map rebuilds the screen
   at once; in a battle's pause menu it applies to the next screen. A bundled subset of Noto Sans SC (`ui/fonts/cjk_subset.ttf`, 197 KB, OFL licence) is the fallback font, so Chinese shows in browsers too.
   `?lang=zh` in the web address opens the game in Chinese. Tests: add `--lang=zh` (e.g. `godot --path . -- --lang=zh --menu-test`). CLAUDE.md now says English by default with a Chinese option.
+- **Auto aim + faster attacks** — pressing attack now instantly turns the hero to the best enemy within 6.5 m in ANY direction (beside or behind too; enemies in front are preferred, units before the fortress), re-aims right
+  before the blow lands, and "magnetism" lunges him up to 13 m/s to close the gap. Swings are faster (attack speed 1.25 -> 1.6) and chain into the next swing at 72% of the animation; holding the Attack button
+  (touch) or the mouse button keeps swinging. Test: `battle.tscn -- --aim-test` (enemies at 90, 180 and -100 degrees all get hit by one press; holding attack = 8 swings in 3 s, was ~5).
