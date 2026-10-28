@@ -15,7 +15,7 @@ var terrain: Terrain
 var camera: HeroCamera
 var spawn_position: Vector3 = Vector3.ZERO
 
-var max_hp: float = float(HeroData.STATS.max_hp)
+var max_hp: float = UpgradeData.value("hero_hp")
 var hp: float = max_hp
 var lives: int = int(HeroData.STATS.lives)
 var state: State = State.FREE
@@ -258,7 +258,8 @@ func _state_roll(delta: float) -> void:
 
 # --- Combat -------------------------------------------------------------------------------------------
 
-func _strike(damage: float) -> void:
+func _strike(base_damage: float) -> void:
+	var damage: float = base_damage * UpgradeData.value("hero_damage")
 	var fwd: Vector3 = forward_vector()
 	var arc_cos: float = cos(deg_to_rad(float(HeroData.STATS.attack_arc_deg) * 0.5))
 	var reach: float = float(HeroData.STATS.attack_range)

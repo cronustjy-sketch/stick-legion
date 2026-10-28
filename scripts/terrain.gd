@@ -2,6 +2,7 @@ class_name Terrain
 extends Node3D
 ## Low-poly flat-shaded valley terrain built from one ArrayMesh.
 
+var look: Dictionary = ThemeData.THEMES[0]  # set before build()
 var _noise: FastNoiseLite = FastNoiseLite.new()
 
 
@@ -63,10 +64,11 @@ func _tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3) -> void:
 
 func _ground_colour(p: Vector3) -> Color:
 	var n: float = _noise.get_noise_2d(p.x * 3.1 + 40.0, p.z * 3.1) * 0.5 + 0.5
-	var grass: Color = BattlefieldData.COLOR_GRASS_A.lerp(BattlefieldData.COLOR_GRASS_B, n)
-	# (Dirt road removed: the middle of the valley is open grass.)
-	var road: float = 0.0  # open grass field, no road
-	var col: Color = grass.lerp(BattlefieldData.COLOR_DIRT, road * 0.85)
+	var col: Color = (look.ground_a as Color).lerp(look.ground_b as Color, n)
+	var amount: float = float(look.patch_amount)
+	if amount > 0.0:  # burnt / dirty patches
+		var pn: float = _noise.get_noise_2d(p.x * 1.4 + 200.0, p.z * 1.4) * 0.5 + 0.5
+		col = col.lerp(look.patch as Color, smoothstep(0.78 - amount * 0.5, 0.82 - amount * 0.5, pn))
 	# Steep valley sides turn rocky.
 	var rock: float = smoothstep(4.0, 12.0, p.y)
-	return col.lerp(BattlefieldData.COLOR_ROCK_SIDE, rock)
+	return col.lerp(look.rock_side as Color, rock)

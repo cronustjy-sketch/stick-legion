@@ -19,6 +19,8 @@ var _info_body: Label
 var _start: Button
 var _cleared_label: Label
 var _chapter_label: Label
+var _stars_label: Label
+var _armory: Armory
 
 
 func _ready() -> void:
@@ -31,12 +33,20 @@ func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	get_tree().paused = false
 	selected = clampi(GameState.highest_unlocked, 1, LevelData.LEVEL_COUNT)
+	if OS.get_cmdline_user_args().has("--armory-test"):
+		GameState.persist = false
+		GameState.highest_unlocked = 9
+		GameState.stars = {1: 3, 2: 3, 3: 2, 4: 3, 5: 1, 6: 2, 7: 3, 8: 1}
+		GameState.upgrades = {}
 	if OS.get_cmdline_user_args().has("--select-test"):
 		GameState.mark_all_seen_for_test()
 		GameState.highest_unlocked = 1
 		selected = 1
 	_build()
 	_refresh()
+	if OS.get_cmdline_user_args().has("--armory-test"):
+		_run_armory_test()
+		return
 	if OS.get_cmdline_user_args().has("--select-test"):
 		_run_test()
 	elif OS.get_cmdline_user_args().has("--flow-test"):
@@ -86,6 +96,14 @@ func _build() -> void:
 	add_child(back)
 	back.position = Vector2(24.0, 64.0)
 	back.pressed.connect(func() -> void: get_tree().change_scene_to_file("res://scenes/main_menu.tscn"))
+	var armory: Button = UiStyle.button("Armory", Vector2(150, 40), 18)
+	armory.name = "Armory"
+	add_child(armory)
+	armory.position = Vector2(24.0, 112.0)
+	armory.pressed.connect(_open_armory)
+	_stars_label = _label("", 20, Color("ffd24a"))
+	add_child(_stars_label)
+	_stars_label.position = Vector2(24.0, 160.0)
 	var title: Label = _label("STICK LEGION", 54, GOLD)
 	add_child(title)
 	title.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP, Control.PRESET_MODE_MINSIZE, 18)
@@ -148,6 +166,14 @@ func _build() -> void:
 	row.add_child(_start)
 
 
+func _open_armory() -> void:
+	if is_instance_valid(_armory):
+		return
+	_armory = Armory.new()
+	_armory.name = "Armory"
+	add_child(_armory)
+	_armory.closed.connect(_refresh)
+
 func _on_node_pressed(lvl: int) -> void:
 	_select(lvl)
 
@@ -165,6 +191,7 @@ func _play() -> void:
 
 func _refresh() -> void:
 	var unlocked: int = mini(GameState.highest_unlocked, LevelData.LEVEL_COUNT)
+	_stars_label.text = Loc.f("Stars: %d earned, %d to spend", [GameState.stars_earned(), GameState.stars_available()])
 	var cleared: int = clampi(GameState.highest_unlocked - 1, 0, LevelData.LEVEL_COUNT)
 	_cleared_label.text = Loc.f("Levels cleared: %d / %d", [cleared, LevelData.LEVEL_COUNT])
 	for i: int in _buttons.size():
@@ -197,6 +224,7 @@ func _refresh() -> void:
 		names.append(Loc.t(String(UnitData.STATS[k].name)))
 	var lines: PackedStringArray = PackedStringArray()
 	lines.append(Loc.t("Enemy strength x%.2f     Enemy fortress %d HP") % [float(st.multiplier), int(float(st.fortress_hp))])
+	lines.append(Loc.f("Par time %s for the third star     Your best: %d of 3 stars", [LevelData.format_time(LevelData.par_time(selected)), GameState.stars_of(selected)]))
 	lines.append(Loc.t("Enemy army: ") + ("、" if Loc.is_zh() else ", ").join(names))
 	if not (st.boss as Dictionary).is_empty():
 		lines.append(Loc.t("BOSS: %s  (the fortress is shielded until the boss falls)") % Loc.t(String((st.boss as Dictionary).name)))
@@ -239,6 +267,14 @@ func _draw_map() -> void:
 	var start: Vector2 = _points[0] + Vector2(-70.0, 8.0)
 	_map.draw_rect(Rect2(start + Vector2(-22, -30), Vector2(44, 40)), Color("b6c0cc"))
 	_map.draw_colored_polygon(PackedVector2Array([start + Vector2(-26, -30), start + Vector2(0, -56), start + Vector2(26, -30)]), GOLD)
+	# Stars earned on each cleared level (above the node when it sits low, so the info panel never covers them).
+	for i: int in _points.size():
+		var got: int = GameState.stars_of(i + 1)
+		if i + 1 < GameState.highest_unlocked:
+			var off: float = 38.0 + (10.0 if LevelData.is_boss_level(i + 1) else 0.0)
+			var y: float = _points[i].y - off if _points[i].y > 440.0 else _points[i].y + off
+			for s: int in 3:
+				StarRow.draw_star(_map, Vector2(_points[i].x + (float(s) - 1.0) * 17.0, y), 8.0, s < got)
 
 
 func _label(text: String, font_size: int, color: Color) -> Label:
@@ -265,3 +301,27 @@ func _run_test() -> void:
 	print("SELECT-TEST selected=", selected, " unlocked=", GameState.highest_unlocked, " info: ", _info_title.text)
 	_on_node_pressed(7)
 	_start.pressed.emit()
+
+
+## Stars on the map and the Armory (godot --path . res://scenes/level_select.tscn --rendering-driver opengl3 -- --armory-test).
+func _run_armory_test() -> void:
+	await get_tree().create_timer(0.6).timeout
+	await RenderingServer.frame_post_draw
+	DebugShot.save(get_viewport(), "armory_map")
+	_open_armory()
+	await get_tree().create_timer(0.4).timeout
+	await RenderingServer.frame_post_draw
+	DebugShot.save(get_viewport(), "armory_open")
+	print("ARMORY-TEST stars earned=", GameState.stars_earned(), " available=", GameState.stars_available(), " (expected 18)")
+	for key: String in ["hero_hp", "hero_hp", "unit_damage", "income", "income", "income"]:
+		var b: Button = _armory.find_child("Buy_" + key, true, false) as Button
+		print("ARMORY-TEST ", key, " button disabled=", b.disabled, " text=", b.text)
+		if not b.disabled:
+			b.pressed.emit()
+		await get_tree().create_timer(0.1).timeout  # rows are rebuilt after each purchase
+	await get_tree().create_timer(0.3).timeout
+	await RenderingServer.frame_post_draw
+	DebugShot.save(get_viewport(), "armory_bought")
+	print("ARMORY-TEST after buying: tiers=", GameState.upgrades, " stars left=", GameState.stars_available())
+	GameState.stars = {}
+	get_tree().quit()

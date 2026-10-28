@@ -11,9 +11,9 @@ enum Order { CHARGE, HOLD, FOLLOW, RETREAT }
 const ORDER_NAMES: Array[String] = ["Charge", "Hold", "Follow", "Retreat"]
 
 var battle: Battle
-var gold: float = EconomyData.START_GOLD
+var gold: float = UpgradeData.value("start_gold")
 var pop_used: int = 0
-var pop_cap: int = EconomyData.POP_CAP
+var pop_cap: int = int(UpgradeData.value("army_cap"))
 var order: Order = Order.CHARGE
 
 var _slot_counter: int = 0
@@ -28,7 +28,7 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_buff_left = maxf(_buff_left - delta, 0.0)
-	gold += EconomyData.INCOME_PER_SECOND * delta
+	gold += UpgradeData.value("income") * delta
 	_emit_gold()
 
 

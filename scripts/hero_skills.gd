@@ -26,7 +26,7 @@ func rage_max() -> float:
 
 
 func add_rage(amount: float) -> void:
-	rage = clampf(rage + amount, 0.0, rage_max())
+	rage = clampf(rage + amount * UpgradeData.value("rage_gain"), 0.0, rage_max())
 	rage_changed.emit(rage, rage_max())
 
 
@@ -38,7 +38,7 @@ func is_ready(id: String) -> bool:
 
 ## 0 = ready, 1 = just used (for the HUD cooldown overlay).
 func cooldown_fraction(id: String) -> float:
-	var cd: float = float(HeroData.SKILLS[id].cooldown)
+	var cd: float = float(HeroData.SKILLS[id].cooldown) * UpgradeData.value("skill_cooldown")
 	if cd <= 0.0:
 		return 0.0
 	return clampf(float(_cd.get(id, 0.0)) / cd, 0.0, 1.0)
@@ -68,7 +68,7 @@ func cast(id: String, move_dir: Vector3) -> void:
 		rage = 0.0
 		rage_changed.emit(rage, rage_max())
 	else:
-		_cd[id] = float(def.cooldown)
+		_cd[id] = float(def.cooldown) * UpgradeData.value("skill_cooldown")
 	if def.has("dash"):
 		_dir = move_dir.normalized() if move_dir.length() > 0.1 else hero.forward_vector()
 		hero.rotation.y = atan2(-_dir.x, -_dir.z)
@@ -104,7 +104,7 @@ func _apply(def: Dictionary) -> void:
 	var gold: Color = Color("ffd24a")
 	if float(def.get("damage", 0.0)) > 0.0:
 		var radius: float = float(def.radius)
-		var dmg: float = float(def.damage)
+		var dmg: float = float(def.damage) * UpgradeData.value("hero_damage")
 		for n: Node in hero.get_tree().get_nodes_in_group("hittable_enemy"):
 			if not n.call("is_alive"):
 				continue

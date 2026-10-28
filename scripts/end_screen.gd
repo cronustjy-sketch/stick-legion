@@ -40,6 +40,8 @@ func show_result(victory: bool, level: int) -> void:
 	var sub: Label = _label(Loc.t("Level %d cleared. The enemy fortress has fallen." if victory else "Level %d lost. Your fortress fell or your hero is out of lives.") % level, 20, Color("f1ede2"))
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(sub)
+	if victory and level <= LevelData.LEVEL_COUNT and battle != null:
+		_add_stars(v)
 	var row: HBoxContainer = HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 16)
@@ -53,6 +55,34 @@ func show_result(victory: bool, level: int) -> void:
 	row.add_child(_button("Retry", func() -> void: _go(level)))
 	row.add_child(_button("Level Select", _to_map))
 
+
+## The three stars for this win, which goal each one was for, and how many stars are free to spend.
+func _add_stars(v: VBoxContainer) -> void:
+	var big: StarRow = StarRow.create(battle.result_stars, 30.0)
+	big.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	v.add_child(big)
+	var goals: Array[String] = [
+		Loc.t("Win the battle"),
+		Loc.t("Your fortress above 50% HP"),
+		Loc.f("Win under %s (yours: %s)", [LevelData.format_time(battle.par_time), LevelData.format_time(battle.elapsed)]),
+	]
+	for i: int in 3:
+		var hb: HBoxContainer = HBoxContainer.new()
+		hb.alignment = BoxContainer.ALIGNMENT_CENTER
+		hb.add_theme_constant_override("separation", 8)
+		var done: bool = battle.result_flags[i]
+		hb.add_child(StarRow.create(1 if done else 0, 10.0, 1))
+		hb.add_child(_label_raw(goals[i], 18, Color("f1ede2") if done else Color("9a978d")))
+		v.add_child(hb)
+	var free: Label = _label(Loc.f("Stars to spend in the Armory: %d", [GameState.stars_available()]), 18, Color("ffd24a"))
+	free.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(free)
+
+
+func _label_raw(text: String, size: int, color: Color) -> Label:
+	var l: Label = _label("", size, color)
+	l.text = text
+	return l
 
 func _to_map() -> void:
 	get_tree().paused = false

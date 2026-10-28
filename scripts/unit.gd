@@ -75,9 +75,11 @@ func setup(unit_key: String, team_id: int, strength: float = 1.0) -> void:
 	key = unit_key
 	team = team_id
 	var s: Dictionary = UnitData.STATS[unit_key]
-	max_hp = float(s.hp) * strength
+	var up_hp: float = UpgradeData.value("unit_hp") if team_id == 0 else 1.0
+	var up_dmg: float = UpgradeData.value("unit_damage") if team_id == 0 else 1.0
+	max_hp = float(s.hp) * strength * up_hp
 	hp = max_hp
-	damage = float(s.dmg) * strength
+	damage = float(s.dmg) * strength * up_dmg
 	attack_range = float(s.range)
 	speed = float(s.speed)
 	cooldown = float(s.cooldown)

@@ -72,3 +72,18 @@ static func settings(level: int) -> Dictionary:
 		"pool": pool(level),
 		"boss": BossData.for_level(level),
 	}
+
+
+## Par time in seconds for the third star (shown before the level). Tune here.
+const PAR_BASE: float = 150.0
+const PAR_PER_LEVEL: float = 25.0
+const PAR_BOSS_EXTRA: float = 90.0
+
+
+static func par_time(level: int) -> float:
+	return PAR_BASE + PAR_PER_LEVEL * float(level - 1) + (PAR_BOSS_EXTRA if is_boss_level(level) else 0.0)
+
+
+static func format_time(seconds: float) -> String:
+	var s: int = int(ceil(seconds))
+	return "%d:%02d" % [s / 60, s % 60]

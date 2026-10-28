@@ -6,6 +6,10 @@ Created by **Junyuan**.
 
 **Play it in your browser: <https://cronustjy-sketch.github.io/stick-legion/>** (works on phones too; the first load downloads about 40 MB).
 
+## Progress
+
+Each battle gives up to 3 stars (win, your fortress above 50% HP, win under the par time). Spend stars in the **Armory** on the campaign map: hero HP, damage, skill cooldown and rage gain; army HP, damage, gold per second, starting gold and army cap. The four chapters each have their own look (green valleys, snowy Iron Pass, Burning Fields, Ruined Capital).
+
 ## Controls
 
 | | Keyboard + mouse | Phone |

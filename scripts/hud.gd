@@ -108,6 +108,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _process(_delta: float) -> void:
 	_update_boss_bar()
+	_update_timer()
 	_update_skills()
 	var wait: float = battle.hero.respawn_remaining()
 	_respawn_label.text = Loc.f("Respawning in %d", [ceili(wait)]) if wait > 0.0 else ""
@@ -219,7 +220,21 @@ func _build_top_right(root: Control) -> void:
 	_hint_panel.visible = false
 	if battle.level == 1:
 		_show_help(true)
+	if battle.level <= LevelData.LEVEL_COUNT:
+		get_tree().create_timer(1.0).timeout.connect(func() -> void:
+			if is_instance_valid(self) and not battle.ended:
+				show_toast(Loc.f("Par time %s: win under it for the third star", [LevelData.format_time(battle.par_time)])))
 
+
+## "Level 3   1:12 / par 5:00" - turns red once the par time (third star) is gone. Endless battles show only the time.
+func _update_timer() -> void:
+	var t: String = LevelData.format_time(battle.elapsed)
+	if battle.level > LevelData.LEVEL_COUNT:
+		_level_label.text = Loc.f("Level %d", [battle.level]) + "   " + t
+		return
+	var over: bool = battle.elapsed > battle.par_time
+	_level_label.text = Loc.f("Level %d   %s / par %s", [battle.level, t, LevelData.format_time(battle.par_time)])
+	_level_label.add_theme_color_override("font_color", RED if over else TEXT)
 
 func _show_help(on: bool) -> void:
 	_hint_panel.visible = on

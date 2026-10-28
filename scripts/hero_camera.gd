@@ -33,6 +33,11 @@ func _ready() -> void:
 		_focus = target.global_position
 
 
+## True once the camera has risen into the tactical view (weather hides itself then).
+func is_tactical() -> bool:
+	return _tac_t > 0.15
+
+
 ## Turns the camera by a finger drag (phones).
 func look(rel: Vector2) -> void:
 	yaw -= rel.x * float(HeroData.CAMERA.mouse_sensitivity) * 1.3 * Settings.mouse_sens

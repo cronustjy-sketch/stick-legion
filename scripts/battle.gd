@@ -19,6 +19,11 @@ var boss: Boss
 var bosses: Array[Boss] = []
 var ended: bool = false
 var unlock_all: bool = false  # tests only: ignore the unit unlock levels
+var look: Dictionary = ThemeData.THEMES[0]  # the chapter look (colours, props, weather)
+var elapsed: float = 0.0  # seconds of battle so far (for the par-time star)
+var par_time: float = 0.0
+var result_stars: int = 0
+var result_flags: Array[bool] = [false, false, false]
 
 var _clouds: Node3D
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
@@ -31,10 +36,15 @@ func _ready() -> void:
 		if (a.ends_with("-test") and a != "--start-test") or a.begins_with("--boss-level="):
 			GameState.persist = false  # scripted tests never touch the real save file
 			unlock_all = true  # ...and may buy any unit
+		elif a.begins_with("--level="):
+			GameState.persist = false
+	GameState.load_progress()  # first: the upgrades must be known before the hero and army are made
+	_resolve_level()
 	_rng.seed = BattlefieldData.SCENE_SEED
 	_build_environment()
 	terrain = Terrain.new()
 	terrain.name = "Terrain"
+	terrain.look = look
 	add_child(terrain)
 	terrain.build()
 	_build_mountains()
@@ -95,6 +105,17 @@ func _ready() -> void:
 	if args.has("--start-test"):
 		spawner.enabled = false
 		_run_start_test()
+	if args.has("--theme-test"):
+		spawner.enabled = false
+		_run_theme_test()
+	if args.has("--upgrade-test"):
+		spawner.enabled = false
+		_run_upgrade_test()
+	if args.has("--par-test"):
+		_run_par_test()
+	if args.has("--stars-test"):
+		spawner.enabled = false
+		_run_stars_test()
 	if args.has("--aim-test"):
 		spawner.enabled = false
 		_run_aim_test()
@@ -155,15 +176,20 @@ func _make_fortress(team: Fortress.Team, z: float, yaw: float) -> Fortress:
 
 
 func _build_environment() -> void:
-	_clouds = SkySetup.build(self)
+	_clouds = SkySetup.build(self, look)
 
 
 func _process(delta: float) -> void:
+	if not ended:
+		elapsed += delta
 	if _clouds != null:
 		_clouds.rotation.y += deg_to_rad(0.35) * delta
+		# The high tactical camera would fly through the clouds (and see only a white or red wall): hide them up there.
+		if hero_camera != null and hero_camera.camera != null:
+			_clouds.visible = hero_camera.camera.global_position.y < 38.0
 
 
-func _toon(c: Color) -> StandardMaterial3D:
+func toon(c: Color) -> StandardMaterial3D:
 	var m: StandardMaterial3D = StandardMaterial3D.new()
 	m.albedo_color = c
 	m.diffuse_mode = BaseMaterial3D.DIFFUSE_TOON
@@ -179,6 +205,7 @@ func _build_mountains() -> void:
 	mesh.radial_segments = 6
 	mesh.rings = 1
 	var xfs: Array[Transform3D] = []
+	var caps: Array[Transform3D] = []
 	for i: int in 26:
 		var t: float = float(i) / 26.0
 		var ang: float = t * TAU
@@ -186,12 +213,20 @@ func _build_mountains() -> void:
 		var h: float = _rng.randf_range(55.0, 110.0)
 		var rad: float = h * _rng.randf_range(0.7, 1.0)
 		var b: Basis = Basis.from_scale(Vector3(rad, h, rad)).rotated(Vector3.UP, _rng.randf() * TAU)
-		xfs.append(Transform3D(b, Vector3(cos(ang) * r, h * 0.5 - 6.0, sin(ang) * r)))
-	_add_multimesh("Mountains", mesh, _toon(BattlefieldData.COLOR_MOUNTAIN), xfs)
+		var base_y: float = h * 0.5 - 6.0
+		xfs.append(Transform3D(b, Vector3(cos(ang) * r, base_y, sin(ang) * r)))
+		# Snow caps: the top 40% of the same cone, slightly fatter, in white.
+		var cap_h: float = h * 0.4
+		var cap_b: Basis = Basis.from_scale(Vector3(rad * 0.42, cap_h, rad * 0.42)).rotated(Vector3.UP, _rng.randf() * TAU)
+		caps.append(Transform3D(cap_b, Vector3(cos(ang) * r, base_y + h * 0.5 - cap_h * 0.5 + 0.2, sin(ang) * r)))
+	add_multimesh("Mountains", mesh, toon(look.mountain as Color), xfs)
+	if bool(look.snow_caps):
+		add_multimesh("SnowCaps", mesh, toon(Color("f4f8fc")), caps)
 
 
 func _scatter_props() -> void:
-	# Trees: pine = trunk + two cones, three shared multimeshes.
+	var style: String = String(look.tree_style)
+	var tree_total: int = int(round(float(BattlefieldData.TREE_COUNT) * float(look.tree_count) * Settings.prop_density()))
 	var trunk: CylinderMesh = CylinderMesh.new()
 	trunk.top_radius = 0.18
 	trunk.bottom_radius = 0.26
@@ -207,14 +242,21 @@ func _scatter_props() -> void:
 	var cone_hi: CylinderMesh = cone_lo.duplicate()
 	cone_hi.bottom_radius = 1.05
 	cone_hi.height = 2.2
+	var branch: CylinderMesh = CylinderMesh.new()
+	branch.top_radius = 0.03
+	branch.bottom_radius = 0.09
+	branch.height = 1.5
+	branch.radial_segments = 4
+	branch.rings = 1
 	var t_trunk: Array[Transform3D] = []
 	var t_lo: Array[Transform3D] = []
 	var t_hi: Array[Transform3D] = []
+	var t_branch: Array[Transform3D] = []
 	var rocks: Array[Transform3D] = []
 	var blobs: Array[Vector3] = []  # x, z, radius
 	var placed: int = 0
 	var guard: int = 0
-	while placed < int(round(float(BattlefieldData.TREE_COUNT) * Settings.prop_density())) and guard < 2000:
+	while placed < tree_total and guard < 2000:
 		guard += 1
 		var side: float = -1.0 if _rng.randf() < 0.5 else 1.0
 		var x: float = side * _rng.randf_range(BattlefieldData.FIELD_HALF_WIDTH + 1.0, 46.0)
@@ -223,18 +265,31 @@ func _scatter_props() -> void:
 			continue
 		var s: float = _rng.randf_range(0.9, 1.7)
 		var y: float = terrain.height_at(x, z)
-		t_trunk.append(Transform3D(Basis.from_scale(Vector3(s, s, s)), Vector3(x, y + 0.8 * s, z)))
-		t_lo.append(Transform3D(Basis.from_scale(Vector3(s, s, s)), Vector3(x, y + 2.5 * s, z)))
-		t_hi.append(Transform3D(Basis.from_scale(Vector3(s, s, s)), Vector3(x, y + 4.0 * s, z)))
-		blobs.append(Vector3(x, z, 2.6 * s))
+		if style == "dead":
+			# A burnt, leafless trunk with two bare branches.
+			var lean: Basis = Basis.from_euler(Vector3(_rng.randf_range(-0.12, 0.12), _rng.randf() * TAU, _rng.randf_range(-0.12, 0.12)))
+			var tall: float = s * _rng.randf_range(1.8, 2.8)
+			t_trunk.append(Transform3D(lean * Basis.from_scale(Vector3(s * 0.8, tall, s * 0.8)), Vector3(x, y + 0.8 * tall, z)))
+			for k: int in 2:
+				var bb: Basis = Basis.from_euler(Vector3(0.0, _rng.randf() * TAU, 0.0)) * Basis.from_euler(Vector3(0.0, 0.0, (0.8 if k == 0 else -0.8) + _rng.randf_range(-0.2, 0.2)))
+				t_branch.append(Transform3D(bb * Basis.from_scale(Vector3(s, s, s)), Vector3(x, y + tall * (1.2 + 0.4 * float(k)), z)))
+		else:
+			t_trunk.append(Transform3D(Basis.from_scale(Vector3(s, s, s)), Vector3(x, y + 0.8 * s, z)))
+			t_lo.append(Transform3D(Basis.from_scale(Vector3(s, s, s)), Vector3(x, y + 2.5 * s, z)))
+			t_hi.append(Transform3D(Basis.from_scale(Vector3(s, s, s)), Vector3(x, y + 4.0 * s, z)))
+		blobs.append(Vector3(x, z, 2.6 * s if style != "dead" else 1.1 * s))
 		placed += 1
-	_add_multimesh("TreeTrunks", trunk, _toon(Color("5e4630")), t_trunk)
-	_add_multimesh("TreeFoliageLow", cone_lo, _toon(Color("3f7a3a")), t_lo)
-	_add_multimesh("TreeFoliageHigh", cone_hi, _toon(Color("4b8b43")), t_hi)
+	if not t_trunk.is_empty():
+		add_multimesh("TreeTrunks", trunk, toon(look.tree_trunk as Color), t_trunk)
+	if not t_lo.is_empty():
+		add_multimesh("TreeFoliageLow", cone_lo, toon(look.tree_low as Color), t_lo)
+		add_multimesh("TreeFoliageHigh", cone_hi, toon(look.tree_high as Color), t_hi)
+	if not t_branch.is_empty():
+		add_multimesh("TreeBranches", branch, toon(look.tree_trunk as Color), t_branch)
 
 	# Rocks: flat-shaded faceted blobs; kept at the edges so the field stays open.
 	var rock_mesh: ArrayMesh = _make_rock_mesh()
-	for i: int in int(round(float(BattlefieldData.ROCK_COUNT) * Settings.prop_density())):
+	for i: int in int(round(float(BattlefieldData.ROCK_COUNT) * float(look.rock_count) * Settings.prop_density())):
 		var x: float
 		x = (-1.0 if _rng.randf() < 0.5 else 1.0) * _rng.randf_range(BattlefieldData.FIELD_HALF_WIDTH + 0.5, 42.0)
 		var z: float = _rng.randf_range(-(BattlefieldData.FORTRESS_Z - 4.0), BattlefieldData.FORTRESS_Z - 4.0)
@@ -242,7 +297,7 @@ func _scatter_props() -> void:
 		var b: Basis = Basis.from_scale(sc).rotated(Vector3.UP, _rng.randf() * TAU)
 		rocks.append(Transform3D(b, Vector3(x, terrain.height_at(x, z) + sc.y * 0.25, z)))
 		blobs.append(Vector3(x, z, 1.4 * maxf(sc.x, sc.z)))
-	_add_multimesh("Rocks", rock_mesh, _toon(Color("8b8d8f")), rocks)
+	add_multimesh("Rocks", rock_mesh, toon(look.rock_color as Color), rocks)
 
 	# One multimesh of blob shadows for every tree and rock.
 	var sh_mesh: QuadMesh = QuadMesh.new()
@@ -252,7 +307,8 @@ func _scatter_props() -> void:
 	for bl: Vector3 in blobs:
 		var d: float = bl.z * 2.0
 		sh.append(Transform3D(Basis.from_scale(Vector3(d, 1, d)), Vector3(bl.x, terrain.height_at(bl.x, bl.y) + 0.07, bl.y)))
-	_add_multimesh("PropShadows", sh_mesh, BlobShadow.get_material(), sh)
+	add_multimesh("PropShadows", sh_mesh, BlobShadow.get_material(), sh)
+	ThemeProps.build(self, look)
 
 
 func _make_rock_mesh() -> ArrayMesh:
@@ -271,7 +327,7 @@ func _make_rock_mesh() -> ArrayMesh:
 	return st.commit()
 
 
-func _add_multimesh(node_name: String, mesh: Mesh, mat: Material, xfs: Array[Transform3D]) -> MultiMeshInstance3D:
+func add_multimesh(node_name: String, mesh: Mesh, mat: Material, xfs: Array[Transform3D]) -> MultiMeshInstance3D:
 	var mm: MultiMesh = MultiMesh.new()
 	mm.transform_format = MultiMesh.TRANSFORM_3D
 	mm.mesh = mesh
@@ -313,6 +369,9 @@ func _spawn_hero() -> void:
 	hero_camera.terrain = terrain
 	add_child(hero_camera)
 	hero.camera = hero_camera
+	var weather_kind: String = String(look.weather)
+	if weather_kind != "":
+		hero_camera.camera.add_child(Weather.create(weather_kind))
 
 
 ## Debug punching bags in front of the player fortress (removed once real units exist in step 4).
@@ -347,15 +406,30 @@ func spawn_wave(key: String, team: int, count: int) -> void:
 
 # --- Level flow ---------------------------------------------------------------------------------------
 
-func _setup_level() -> void:
-	GameState.load_progress()
+## The three star goals: win, your fortress above 50% HP, win under the par time. Endless battles give no stars.
+func _rate_win() -> void:
+	result_flags = [true, player_fortress.hp > player_fortress.max_hp * 0.5, elapsed <= par_time]
+	result_stars = 0
+	if level <= LevelData.LEVEL_COUNT:
+		for f: bool in result_flags:
+			if f:
+				result_stars += 1
+
+
+## Works out the level (and so the chapter look) before anything is built.
+func _resolve_level() -> void:
 	for a: String in OS.get_cmdline_user_args():
 		if a == "--boss-test":
 			GameState.current_level = 5
-		elif a.begins_with("--boss-level="):
+		elif a.begins_with("--boss-level=") or a.begins_with("--level="):
 			GameState.current_level = int(a.get_slice("=", 1))
 	level = GameState.current_level
 	enemy_level = level
+	look = ThemeData.for_level(level)
+	par_time = LevelData.par_time(level)
+
+
+func _setup_level() -> void:
 	spawner = EnemySpawner.new()
 	spawner.name = "EnemySpawner"
 	spawner.setup(self, level)
@@ -374,7 +448,8 @@ func _finish(victory: bool) -> void:
 	ended = true
 	Sfx.music("", 0.6)
 	if victory:
-		GameState.level_won(level)
+		_rate_win()
+		GameState.level_won(level, result_stars)
 		_collapse(enemy_fortress)
 		Sfx.play("fanfare", 0.0)
 	else:
@@ -770,4 +845,120 @@ func _run_aim_test() -> void:
 	rel.pressed = false
 	Input.parse_input_event(rel)
 	print("AIM-TEST holding attack for 3 s: ", swings[0], " swings landed (before the change: about 5)")
+	get_tree().quit()
+
+
+## Screenshots of the current chapter look (godot --path . res://scenes/battle.tscn --rendering-driver opengl3 -- --theme-test --level=6).
+func _run_theme_test() -> void:
+	var z: float = hero.global_position.z
+	for i: int in 6:
+		var a: Unit = spawn_unit("swordsman", 0, 6.0)
+		a.global_position = Vector3(float(i) * 1.6 - 4.0, 0.0, z - 6.0)
+		var b: Unit = spawn_unit("swordsman" if i % 2 == 0 else "archer", 1, 6.0)
+		b.global_position = Vector3(float(i) * 1.6 - 4.0, 0.0, z - 12.0)
+	await get_tree().create_timer(1.5).timeout
+	var fps_a: float = Engine.get_frames_per_second()
+	await get_tree().create_timer(1.0).timeout
+	var fps_b: float = Engine.get_frames_per_second()
+	await RenderingServer.frame_post_draw
+	var chapter: int = ThemeData.chapter_for_level(level)
+	DebugShot.save(get_viewport(), "ch%d_play" % chapter)
+	hero_camera.touch_tactical = true
+	await get_tree().create_timer(1.5).timeout
+	await RenderingServer.frame_post_draw
+	DebugShot.save(get_viewport(), "ch%d_tactical" % chapter)
+	print("THEME-TEST level=", level, " chapter=", chapter, " look=", look.name, " fps=", (fps_a + fps_b) * 0.5,
+		" draw calls=", RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_DRAW_CALLS_IN_FRAME),
+		" weather=", String(look.weather))
+	get_tree().quit()
+
+
+## Upgrades change the real numbers (godot --path . res://scenes/battle.tscn -- --upgrade-test).
+func _run_upgrade_test() -> void:
+	await get_tree().create_timer(0.5).timeout
+	var base_unit: Unit = spawn_unit("swordsman", 0, 1.0)
+	print("UPGRADE-TEST base: unit hp=", base_unit.max_hp, " dmg=", base_unit.damage, " hero hp=", hero.max_hp, " gold/s=", UpgradeData.value("income"),
+		" cap=", army.pop_cap)
+	GameState.stars = {1: 3, 2: 3, 3: 3, 4: 3, 5: 3, 6: 3, 7: 3, 8: 3, 9: 3, 10: 3, 11: 3, 12: 3, 13: 3, 14: 3, 15: 3, 16: 3, 17: 3, 18: 3, 19: 3, 20: 3}
+	print("UPGRADE-TEST stars available: ", GameState.stars_available(), " (60 expected)")
+	for key: String in UpgradeData.ORDER:
+		var paid: int = 0
+		while GameState.buy_upgrade(key):
+			paid += 1
+		print("UPGRADE-TEST bought ", key, " x", paid, " -> ", UpgradeData.show(key, UpgradeData.value(key)), " stars left ", GameState.stars_available())
+		if GameState.stars_available() <= 0:
+			break
+	print("UPGRADE-TEST buying with 0 stars left fails: ", not GameState.buy_upgrade("army_cap"))
+	GameState.upgrades.clear()
+	GameState.upgrades = {"hero_hp": 5, "hero_damage": 5, "skill_cooldown": 5, "rage_gain": 5, "unit_hp": 5, "unit_damage": 5, "income": 5, "start_gold": 5, "army_cap": 5}
+	var up_unit: Unit = spawn_unit("swordsman", 0, 1.0)
+	var up_hero: Hero = Hero.new()
+	var up_army: ArmyManager = ArmyManager.new()
+	print("UPGRADE-TEST max tiers: unit hp=", up_unit.max_hp, " (60 x 1.4 = 84) dmg=", up_unit.damage, " (10 x 1.35 = 13.5) hero hp=", up_hero.max_hp,
+		" (225) start gold=", up_army.gold, " (300) cap=", up_army.pop_cap, " (55) income=", UpgradeData.value("income"))
+	up_hero.free()
+	up_army.free()
+	var cd_before: float = hero.skills.cooldown_left("q")
+	hero.skills.cast("q", Vector3.ZERO)
+	print("UPGRADE-TEST Q cooldown after cast=", snappedf(hero.skills.cooldown_left("q"), 0.01), " (6.0 x 0.6 = 3.6; before ", cd_before, ")")
+	hero.skills.rage = 0.0
+	hero.skills.add_rage(10.0)
+	print("UPGRADE-TEST rage from 10 = ", hero.skills.rage, " (18 expected)")
+	var dummy_dmg: float = 14.0 * UpgradeData.value("hero_damage")
+	print("UPGRADE-TEST first swing damage = ", dummy_dmg, " (14 x 1.4 = 19.6)")
+	GameState.upgrades.clear()
+	get_tree().quit()
+
+
+## The three star goals (godot --path . res://scenes/battle.tscn --rendering-driver opengl3 -- --stars-test).
+func _run_stars_test() -> void:
+	await get_tree().create_timer(0.5).timeout
+	print("STARS-TEST level ", level, " par ", LevelData.format_time(par_time))
+	elapsed = par_time - 5.0
+	_rate_win()
+	print("STARS-TEST fast + healthy fortress: ", result_stars, " flags ", result_flags, " (3 expected)")
+	player_fortress.hp = player_fortress.max_hp * 0.4
+	_rate_win()
+	print("STARS-TEST fast + damaged fortress: ", result_stars, " flags ", result_flags, " (2 expected)")
+	elapsed = par_time + 20.0
+	_rate_win()
+	print("STARS-TEST slow + damaged fortress: ", result_stars, " flags ", result_flags, " (1 expected)")
+	player_fortress.hp = player_fortress.max_hp
+	_rate_win()
+	print("STARS-TEST slow + healthy fortress: ", result_stars, " (2 expected)")
+	elapsed = 100.0
+	var win_gain: int = GameState.level_won(level, 2)
+	print("STARS-TEST saved 2 stars, newly earned=", win_gain, " best=", GameState.stars_of(level), " total=", GameState.stars_earned())
+	win_gain = GameState.level_won(level, 1)
+	print("STARS-TEST replay with 1 star keeps best: gain=", win_gain, " best=", GameState.stars_of(level))
+	win_gain = GameState.level_won(level, 3)
+	print("STARS-TEST replay with 3 stars: gain=", win_gain, " best=", GameState.stars_of(level))
+	# Real path: win the battle, look at the victory screen.
+	GameState.highest_unlocked = 1
+	enemy_fortress.take_damage(99999.0)
+	await get_tree().create_timer(2.4).timeout
+	await RenderingServer.frame_post_draw
+	DebugShot.save(get_viewport(), "stars_victory")
+	print("STARS-TEST victory screen: ended=", ended, " stars=", result_stars, " flags=", result_flags)
+	get_tree().quit()
+
+
+## Balance probe (godot --path . res://scenes/battle.tscn -- --par-test --level=N): the army alone (a bot buys units, hero idle)
+## fights the real enemy spawner at 6x speed. Prints how long the win takes: a ceiling for what an active player needs.
+func _run_par_test() -> void:
+	Engine.time_scale = 6.0
+	var pool: Array[String] = LevelData.pool(level)
+	var pick: int = 0
+	var t: float = 0.0
+	while not ended and t < 900.0:
+		await get_tree().create_timer(1.0).timeout
+		t += 1.0 * 1.0
+		var key: String = pool[pick % pool.size()]
+		if army.try_spawn(key):
+			pick += 1
+		if elapsed > 900.0:
+			break
+	Engine.time_scale = 1.0
+	print("PAR-TEST level=", level, " ended=", ended, " army-only time=", LevelData.format_time(elapsed), " (par ", LevelData.format_time(par_time), ")",
+		" enemy fortress=", int(enemy_fortress.hp), "/", int(enemy_fortress.max_hp), " your fortress=", int(player_fortress.hp), " hero lives=", hero.lives)
 	get_tree().quit()
