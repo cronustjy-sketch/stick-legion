@@ -30,12 +30,30 @@ func _run() -> void:
 	battle.hero_camera._focus = hero.global_position
 	battle.hero_camera.distance = 10.0
 	battle.hero_camera.pitch = 0.55
+	# The boss is NOT on the field at the start; it comes out when the enemy fortress is below 60% (or after 3:00).
+	print("BOSS-TEST at the start: bosses on the field=", battle.bosses.size(), " (expect 0)  shielded=", battle.enemy_fortress.shielded, " (expect false)  phase=", battle.boss_phase, " (expect WAITING=1)")
+	var fort: Fortress = battle.enemy_fortress
+	var before: float = fort.hp
+	fort.take_damage(fort.max_hp * 0.3)
+	print("BOSS-TEST unshielded fortress takes damage: ", fort.hp < before, " (expect true)  hp share=", snappedf(fort.hp / fort.max_hp, 0.01))
+	await _wait(0.5)
+	print("BOSS-TEST at 70% HP still no boss: phase=", battle.boss_phase, " bosses=", battle.bosses.size(), " (expect 1 / 0)")
+	fort.take_damage(fort.max_hp * 0.15)  # now below 60%
+	await _wait(0.3)
+	print("BOSS-TEST below 60%: phase=", battle.boss_phase, " (expect WARNING=2)  bosses=", battle.bosses.size(), " (expect 0)  shielded=", fort.shielded, " (expect false)")
+	await _wait(2.0)
+	await _shot("warning")
+	var waited: float = 2.3
+	while battle.boss_phase != Battle.BossPhase.OUT and waited < 25.0:
+		await _wait(0.25)
+		waited += 0.25
+	print("BOSS-TEST boss out of the gate and taunting after ", snappedf(waited, 0.1), " s: phase=", battle.boss_phase, " (expect OUT=3)  shielded=", fort.shielded, " (expect true)")
 	var bosses: Array[Boss] = battle.bosses
-	print("BOSS-TEST level ", battle.level, ": ", def.name, " x", bosses.size(), " hp=", int(bosses[0].max_hp), " shielded=", battle.enemy_fortress.shielded)
-	var before: float = battle.enemy_fortress.hp
-	battle.enemy_fortress.take_damage(500.0)
-	print("BOSS-TEST shielded fortress takes damage? ", battle.enemy_fortress.hp < before, " (expect false)")
-	await _wait(2.5)
+	print("BOSS-TEST level ", battle.level, ": ", def.name, " x", bosses.size(), " hp=", int(bosses[0].max_hp), " first boss z=", snappedf(bosses[0].global_position.z, 0.1), " (gate at -44.5)")
+	before = fort.hp
+	fort.take_damage(500.0)
+	print("BOSS-TEST shielded fortress takes damage? ", fort.hp < before, " (expect false)")
+	await _wait(1.0)
 	await _shot("appear")
 	Engine.time_scale = 2.0
 	var seen: Dictionary = {}

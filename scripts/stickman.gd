@@ -267,6 +267,10 @@ func _build_gear(m: RigMesh) -> void:
 		var cape_w: float = 0.5 if cape_len > 0.7 else 0.36
 		m.box("Spine", Vector3(0, 1.52 - cape_len * 0.5, 0.135), Vector3(cape_w, cape_len, 0.03), _cloth().darkened(0.2 if cape_len < 0.7 else 0.0))
 		m.box("Spine", Vector3(0, 1.52, 0.1), Vector3(cape_w + 0.02, 0.08, 0.1), _cloth_dark())
+	if bool(look.get("sack", false)):  # a Digger's sack of ore on his back, held by a team-coloured strap
+		m.sphere("Spine", Vector3(0.0, 1.2, 0.25), 0.17, C_LEATHER.lightened(0.12), Vector3(1.0, 1.15, 0.9), 7)
+		m.cyl("Spine", Vector3(0.0, 1.35, 0.23), Vector3(0.0, 1.47, 0.2), 0.055, 0.03, C_WOOD, 5)
+		m.box("Spine", Vector3(0.0, 1.3, -0.13), Vector3(0.05, 0.55, 0.03), _cloth(), Basis(Vector3.BACK, deg_to_rad(25.0)))
 	_weapon(m, String(look.main), "HandR", HAND_R, 1.0)
 	_weapon(m, String(look.off), "HandL", HAND_L, -1.0)
 
@@ -297,6 +301,11 @@ func _helmet(m: RigMesh, kind: String) -> void:
 			m.sphere("Head", Vector3(0, 1.75, 0.012), 0.13, _cloth(), Vector3(1.0, 1.05, 1.06))
 			m.cyl("Head", Vector3(0, 1.78, 0.09), Vector3(0, 1.74, 0.27), 0.09, 0.0, _cloth_dark(), 5)
 			m.box("Head", Vector3(0, 1.75, -0.125), Vector3(0.12, 0.05, 0.02), C_BODY)  # shadowed face slit
+		"mining":  # team-coloured hard hat with a brim and a little lamp
+			m.sphere("Head", Vector3(0, 1.78, 0), 0.135, _plume(), Vector3(1.0, 0.8, 1.0))
+			m.cyl("Head", Vector3(0, 1.755, 0), Vector3(0, 1.775, 0), 0.19, 0.19, metal.darkened(0.1), 8)
+			m.box("Head", Vector3(0, 1.86, 0), Vector3(0.04, 0.03, 0.22), metal)
+			m.sphere("Head", Vector3(0, 1.82, -0.13), 0.04, C_WHITE, Vector3(1, 1, 0.7), 5)
 		"circlet":
 			m.cyl("Head", Vector3(0, 1.79, 0), Vector3(0, 1.82, 0), 0.115, 0.115, _plume(), 8)
 			m.sphere("Head", Vector3(0, 1.82, -0.115), 0.025, C_WHITE, Vector3.ONE, 5)
@@ -362,6 +371,11 @@ func _weapon(m: RigMesh, kind: String, bone: String, hand: Vector3, side: float)
 		"axe":
 			m.cyl(bone, Vector3(0, -0.2, 0), Vector3(0, 0.95, 0), 0.03, 0.03, C_WOOD, 5)
 			m.box(bone, Vector3(0, 0.82, -0.1), Vector3(0.035, 0.26, 0.22), metal.lightened(0.15))
+		"pickaxe":  # a wooden haft with a double-pointed iron head across the top
+			m.cyl(bone, Vector3(0, -0.25, 0), Vector3(0, 0.98, 0), 0.03, 0.03, C_WOOD, 5)
+			m.box(bone, Vector3(0, 0.98, 0), Vector3(0.05, 0.07, 0.3), metal.darkened(0.1))
+			m.cyl(bone, Vector3(0, 0.98, -0.15), Vector3(0, 0.93, -0.38), 0.035, 0.0, metal.lightened(0.2), 4)
+			m.cyl(bone, Vector3(0, 0.98, 0.15), Vector3(0, 0.93, 0.34), 0.035, 0.0, metal.lightened(0.2), 4)
 		"greatsword":
 			m.cyl(bone, Vector3(0, -0.12, 0), Vector3(0, 0.12, 0), 0.03, 0.03, C_LEATHER, 5)
 			m.box(bone, Vector3(0, 0.14, 0), Vector3(0.34, 0.05, 0.07), Color("2a2528"))

@@ -35,8 +35,14 @@ const ZH: Dictionary = {
 	"%s! Army damage +%d%% for %ds": "%s！全军伤害 +%d%%，持续 %d 秒",
 	"Boss defeated! The fortress shield is down!": "首领被击败！要塞护盾消失！",
 	"%s is enraged!": "%s 狂暴了！",
-	"WASD move   Shift sprint   Space roll\nLeft click attack   Right click block\nQ E R F skills   G ultimate (full rage)\n1-4 army orders   Hold Tab: tactical view\nZ X C V B N M , . /  buy units\nEsc pause   Hold Alt: use the mouse":
-		"WASD 移动   Shift 冲刺   空格 翻滚\n左键 攻击   右键 格挡\nQ E R F 技能   G 终极技（怒气满）\n1-4 军队指令   按住 Tab：战术视角\nZ X C V B N M , . /  购买士兵\nEsc 暂停   按住 Alt：使用鼠标",
+	# --- Diggers, gold and boss timing ---
+	"Digger": "矿工", "Diggers: %d": "矿工：%d", "Digger limit reached": "矿工数量已达上限",
+	"Digger load": "矿工载重", "Diggers carry more gold home.": "矿工每次带回更多金币。",
+	"Grask the Butcher approaches!": "屠夫格拉斯克来了！", "Siege Master Volk approaches!": "攻城大师沃尔克来了！",
+	"The Twin Blades approach!": "双刃姐弟来了！", "Corvin, the Crimson King approaches!": "绯红之王科尔文来了！",
+	"BOSS: %s  (walks out when the enemy fortress is below 60% or after 3:00; the fortress is shielded until it falls)": "首领：%s  （敌方要塞血量低于60%或3分钟后出场；首领倒下前要塞有护盾）",
+	"WASD move   Shift sprint   Space roll\nLeft click attack   Right click block\nQ E R F skills   G ultimate (full rage)\n1-4 army orders   Hold Tab: tactical view\nT digger   Z X C V B N M , . /  buy units\nEsc pause   Hold Alt: use the mouse":
+		"WASD 移动   Shift 冲刺   空格 翻滚\n左键 攻击   右键 格挡\nQ E R F 技能   G 终极技（怒气满）\n1-4 军队指令   按住 Tab：战术视角\nT 矿工   Z X C V B N M , . /  购买士兵\nEsc 暂停   按住 Alt：使用鼠标",
 	"Left stick: move (push to the edge to sprint)\nAttack / Roll / Block buttons\nDrag the right side to look around\nTap skills, orders and units\nMap: tactical view   II: pause":
 		"左摇杆：移动（推到边缘冲刺）\n攻击 / 翻滚 / 格挡 按钮\n拖动右侧屏幕转动视角\n点按技能、指令和士兵\n地图：战术视角   II：暂停",
 	# --- Units and skills ---
@@ -81,7 +87,6 @@ const ZH: Dictionary = {
 	"   (locked)": "   （未解锁）",
 	"Enemy strength x%.2f     Enemy fortress %d HP": "敌人强度 x%.2f     敌方要塞生命 %d",
 	"Enemy army: ": "敌军：",
-	"BOSS: %s  (the fortress is shielded until the boss falls)": "首领：%s  （首领倒下前要塞有护盾）",
 	"No boss on this level.": "本关没有首领。",
 	"Endless Battle %d": "无尽战斗 %d",
 	# --- Level and chapter names ---
@@ -168,7 +173,6 @@ const ZH: Dictionary = {
 	"Rage gain": "怒气获取",
 	"Unit HP": "士兵生命",
 	"Unit damage": "士兵伤害",
-	"Gold per second": "每秒金币",
 	"Starting gold": "初始金币",
 	"Army cap": "军队上限",
 	"Aldric can take more punishment.": "奥德里克能承受更多伤害。",
@@ -177,7 +181,6 @@ const ZH: Dictionary = {
 	"The ultimate meter fills faster.": "终极技能的怒气条涨得更快。",
 	"Your soldiers survive longer.": "你的士兵更耐打。",
 	"Your soldiers hit harder.": "你的士兵伤害更高。",
-	"More gold every second.": "每秒获得更多金币。",
 	"Begin each battle richer.": "每场战斗以更多金币开始。",
 	"Field a bigger army.": "可以带更大的军队。",
 }

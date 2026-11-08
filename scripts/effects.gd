@@ -60,7 +60,7 @@ func number(pos: Vector3, amount: float, kind: String = "hit") -> void:
 		return
 	_live_numbers += 1
 	var l: Label3D = Label3D.new()
-	l.text = ("+%d" if kind == "heal" else "%d") % int(round(amount))
+	l.text = ("+%d" if kind in ["heal", "gold", "enemy_gold"] else "%d") % int(round(amount))
 	l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	l.fixed_size = true
 	l.no_depth_test = true
@@ -74,6 +74,10 @@ func number(pos: Vector3, amount: float, kind: String = "hit") -> void:
 			l.modulate = Color("ff5a4a")
 		"heal":
 			l.modulate = Color("6fe08a")
+		"gold":
+			l.modulate = Color("ffd24a")
+		"enemy_gold":
+			l.modulate = Color("e8806a")
 		_:
 			l.modulate = Color("ffffff")
 	add_child(l)

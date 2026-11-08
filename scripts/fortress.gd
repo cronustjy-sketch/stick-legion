@@ -14,6 +14,7 @@ enum Team { PLAYER, ENEMY }
 var max_hp: float = BattlefieldData.FORTRESS.max_hp
 var hp: float = max_hp
 var shielded: bool = false  # enemy fortress is shielded while a boss lives
+var hold_last_hp: bool = false  # cannot be destroyed (between "the boss is coming" and the boss walking out)
 var hit_radius: float = 0.0  # part of the "hittable_enemy" interface the hero uses
 
 var _hp_bar: HpBar3D
@@ -39,7 +40,7 @@ func take_damage(amount: float, _from: Vector3 = Vector3.ZERO) -> void:
 		_sound("zap", -6.0, 0.5)
 		return
 	_sound("crack", -8.0, 0.35)
-	hp = maxf(hp - amount, 0.0)
+	hp = maxf(hp - amount, 1.0 if hold_last_hp else 0.0)
 	_hp_bar.set_fill(hp / max_hp)
 	hp_changed.emit(hp, max_hp)
 	if hp <= 0.0:

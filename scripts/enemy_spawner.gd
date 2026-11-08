@@ -1,6 +1,7 @@
 class_name EnemySpawner
 extends Node
-## The enemy "player": earns gold, then buys units from the level's pool at its fortress, up to its population cap.
+## The enemy "player": its Diggers bring gold home (plus a small trickle), and it buys Diggers first, then units from the level's pool,
+## up to its population cap. Killing its Diggers starves it.
 
 var battle: Battle
 var settings: Dictionary
@@ -16,17 +17,28 @@ func setup(b: Battle, level: int) -> void:
 	gold = float(settings.start_gold)
 
 
+func add_gold(amount: float) -> void:
+	gold += amount
+
+
 func _process(delta: float) -> void:
 	if not enabled or not battle.enemy_fortress.is_alive():
 		return
-	gold += float(settings.income) * delta
+	gold += float(settings.trickle) * delta
 	_clock += delta
 	if _clock < float(settings.interval):
 		return
 	_clock = 0.0
+	var digger_cost: float = float(UnitData.STATS.digger.cost)
+	var diggers: int = get_tree().get_nodes_in_group("diggers_team1").size()
+	if diggers < int(settings.diggers) and gold >= digger_cost:
+		gold -= digger_cost
+		battle.spawn_unit("digger", 1)
+		return
 	var pop: int = 0
 	for n: Node in get_tree().get_nodes_in_group("units_team1"):
-		pop += int(UnitData.STATS[(n as Unit).key].pop)
+		if not (n is Digger):  # Diggers do not count against the army cap
+			pop += int(UnitData.STATS[(n as Unit).key].pop)
 	# Cheap units are picked more often than expensive ones.
 	var options: Array[String] = []
 	var weights: Array[float] = []

@@ -227,7 +227,7 @@ func _refresh() -> void:
 	lines.append(Loc.f("Par time %s for the third star     Your best: %d of 3 stars", [LevelData.format_time(LevelData.par_time(selected)), GameState.stars_of(selected)]))
 	lines.append(Loc.t("Enemy army: ") + ("、" if Loc.is_zh() else ", ").join(names))
 	if not (st.boss as Dictionary).is_empty():
-		lines.append(Loc.t("BOSS: %s  (the fortress is shielded until the boss falls)") % Loc.t(String((st.boss as Dictionary).name)))
+		lines.append(Loc.t("BOSS: %s  (walks out when the enemy fortress is below 60% or after 3:00; the fortress is shielded until it falls)") % Loc.t(String((st.boss as Dictionary).name)))
 	else:
 		lines.append(Loc.t("No boss on this level."))
 	_info_body.text = "\n".join(lines)

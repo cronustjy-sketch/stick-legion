@@ -5,12 +5,13 @@ extends RefCounted
 ## with red ground markers.
 ##
 ## keys:        the boss unit(s) spawned (the twins are two units)
+## warning:     the line shown (with a countdown and a horn) when the boss is about to walk out of the enemy gate
 ## thresholds:  fractions of HP at which the next phase starts (twins: the survivor enrages when its partner falls)
 ## abilities:   list per phase. "slam" "sweep" "meteors" "summon" "charge" "spin" "dash" "flurry" "combo" "guards"
 ## cooldowns / speed_mult: per phase
 
 const BOSSES: Dictionary = {
-	5: {"id": "grask", "name": "Grask the Butcher", "keys": ["boss_grask"],
+	5: {"id": "grask", "name": "Grask the Butcher", "keys": ["boss_grask"], "warning": "Grask the Butcher approaches!",
 		"appear": "Little gold soldier. I've butchered better.",
 		"defeated": "The King... will finish... what I started.",
 		"thresholds": [0.5], "link": false,
@@ -18,14 +19,14 @@ const BOSSES: Dictionary = {
 		"cooldowns": [6.0, 3.8], "speed_mult": [1.0, 1.35],
 		"slam_radius": 4.5, "spin_radius": 6.5, "charge_width": 4.0, "charge_length": 24.0,
 		"summon": {"count": 3}},
-	10: {"id": "volk", "name": "Siege Master Volk", "keys": ["boss_volk"],
+	10: {"id": "volk", "name": "Siege Master Volk", "keys": ["boss_volk"], "warning": "Siege Master Volk approaches!",
 		"appear": "Walls, armies, kings. I've crushed all three.",
 		"defeated": "You fight like him. Like the King. Same eyes.",
 		"thresholds": [0.5], "link": false,
 		"abilities": [["meteors", "summon"], ["meteors", "summon", "slam"]],
 		"cooldowns": [6.5, 4.0], "speed_mult": [1.0, 1.3],
 		"slam_radius": 5.0, "meteors": 6, "summon": {"key": "catapult", "count": 2}},
-	15: {"id": "twins", "name": "The Twin Blades", "keys": ["boss_sera", "boss_kade"],
+	15: {"id": "twins", "name": "The Twin Blades", "keys": ["boss_sera", "boss_kade"], "warning": "The Twin Blades approach!",
 		"appear": "The Crimson King sends his regards, little brother of his.",
 		"defeated": "Ask your old king... what he did to Corvin.",
 		"speaker": "Sera and Kade",
@@ -33,7 +34,7 @@ const BOSSES: Dictionary = {
 		"abilities": [["dash", "flurry"], ["dash", "flurry", "flurry"]],
 		"cooldowns": [3.2, 1.8], "speed_mult": [1.0, 1.4],
 		"dash_width": 2.6, "dash_length": 13.0},
-	20: {"id": "corvin", "name": "Corvin, the Crimson King", "keys": ["boss_corvin"],
+	20: {"id": "corvin", "name": "Corvin, the Crimson King", "keys": ["boss_corvin"], "warning": "Corvin, the Crimson King approaches!",
 		"appear": "Little brother. You picked up the banner I dropped.",
 		"defeated": "",
 		"thresholds": [0.66, 0.33], "link": false,

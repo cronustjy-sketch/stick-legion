@@ -15,6 +15,10 @@ var battle: Battle
 
 var _gold_label: Label
 var _pop_label: Label
+var _digger_label: Label
+var _alert_label: Label
+var _alert_text: String = ""
+var _alert_left: float = 0.0
 var _player_bar: ProgressBar
 var _player_label: Label
 var _enemy_bar: ProgressBar
@@ -67,6 +71,12 @@ func _ready() -> void:
 	_level_label = _label(Loc.f("Level %d", [battle.level]), 22, TEXT)
 	root.add_child(_level_label)
 	_anchor(_level_label, 0.5, 0.0, 92.0)
+	_alert_label = _label("", 34, RED)
+	_alert_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_alert_label.add_theme_constant_override("outline_size", 8)
+	_alert_label.visible = false
+	root.add_child(_alert_label)
+	_anchor(_alert_label, 0.5, 0.0, 130.0)
 	_respawn_label = _label("", 34, RED)
 	_respawn_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(_respawn_label)
@@ -106,8 +116,15 @@ func _unhandled_input(event: InputEvent) -> void:
 			battle.army.try_spawn(UnitData.ALL_ORDER[i])
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	_update_boss_bar()
+	_digger_label.text = Loc.f("Diggers: %d", [battle.army.digger_count()])
+	if _alert_left > 0.0:
+		_alert_left -= delta
+		_alert_label.text = "%s  %d" % [Loc.t(_alert_text), maxi(ceili(_alert_left), 0)]
+		_alert_label.modulate.a = 0.75 + 0.25 * sin(Time.get_ticks_msec() * 0.012)
+		if _alert_left <= 0.0:
+			_alert_label.visible = false
 	_update_timer()
 	_update_skills()
 	var wait: float = battle.hero.respawn_remaining()
@@ -169,7 +186,13 @@ func _build_top_left(root: Control) -> void:
 	p.add_child(v)
 	_gold_label = _label("Gold  0", 26, GOLD)
 	_pop_label = _label("Army  0 / 40", 20, TEXT)
-	v.add_child(_gold_label)
+	_digger_label = _label("", 18, DIM)
+	var gold_row: HBoxContainer = HBoxContainer.new()
+	gold_row.add_theme_constant_override("separation", 16)
+	gold_row.add_child(_gold_label)
+	gold_row.add_child(_digger_label)
+	_digger_label.size_flags_vertical = Control.SIZE_SHRINK_END
+	v.add_child(gold_row)
 	v.add_child(_pop_label)
 
 
@@ -212,7 +235,7 @@ func _build_top_right(root: Control) -> void:
 	_anchor(p, 1.0, 0.0, margin)
 	p.offset_top += 50.0
 	p.offset_bottom += 50.0
-	var text: String = "WASD move   Shift sprint   Space roll\nLeft click attack   Right click block\nQ E R F skills   G ultimate (full rage)\n1-4 army orders   Hold Tab: tactical view\nZ X C V B N M , . /  buy units\nEsc pause   Hold Alt: use the mouse"
+	var text: String = "WASD move   Shift sprint   Space roll\nLeft click attack   Right click block\nQ E R F skills   G ultimate (full rage)\n1-4 army orders   Hold Tab: tactical view\nT digger   Z X C V B N M , . /  buy units\nEsc pause   Hold Alt: use the mouse"
 	if touch:
 		text = "Left stick: move (push to the edge to sprint)\nAttack / Roll / Block buttons\nDrag the right side to look around\nTap skills, orders and units\nMap: tactical view   II: pause"
 	p.add_child(_label(Loc.t(text), 14, DIM))
@@ -263,7 +286,7 @@ func _build_spawn_bar(root: Control) -> void:
 	var p: PanelContainer = _panel(root)
 	_anchor(p, 0.5, 1.0, 14.0)
 	var h: HBoxContainer = HBoxContainer.new()
-	h.add_theme_constant_override("separation", 8)
+	h.add_theme_constant_override("separation", 5)
 	p.add_child(h)
 	for i: int in UnitData.ALL_ORDER.size():
 		var key: String = UnitData.ALL_ORDER[i]
@@ -273,7 +296,7 @@ func _build_spawn_bar(root: Control) -> void:
 func _spawn_button(key: String, hotkey: String) -> Button:
 	var s: Dictionary = UnitData.STATS[key]
 	var b: Button = Button.new()
-	b.custom_minimum_size = Vector2(62, 132)
+	b.custom_minimum_size = Vector2(58, 132)
 	b.focus_mode = Control.FOCUS_NONE
 	b.add_theme_stylebox_override("normal", _box(Color(0.14, 0.15, 0.18, 0.95), GOLD.darkened(0.4)))
 	b.add_theme_stylebox_override("hover", _box(Color(0.2, 0.21, 0.26, 0.98), GOLD))
@@ -290,10 +313,10 @@ func _spawn_button(key: String, hotkey: String) -> Button:
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	v.add_child(icon)
-	var name_l: Label = _label(Loc.t(String(s.name)), 10, TEXT)
+	var name_l: Label = _label(Loc.t(String(s.name)), 9, TEXT)
 	name_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	name_l.custom_minimum_size = Vector2(58, 28)
+	name_l.custom_minimum_size = Vector2(54, 28)
 	name_l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	name_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	v.add_child(name_l)
@@ -515,6 +538,14 @@ func _build_boss_bar(root: Control) -> void:
 	bv.add_child(_banner_text)
 	_banner.visible = false
 	_banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+
+## A big red warning with a countdown (a boss is coming).
+func show_alert(text: String, seconds: float) -> void:
+	_alert_text = text
+	_alert_left = seconds
+	_alert_label.visible = true
+	_alert_label.text = "%s  %d" % [Loc.t(text), ceili(seconds)]
 
 
 ## A short line of dialogue (boss taunts). Fades after a few seconds.

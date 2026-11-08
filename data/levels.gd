@@ -21,7 +21,7 @@ const CHAPTERS: Array[Dictionary] = [
 
 ## The level at which each unit becomes available to the player (and starts appearing in the enemy army). From STORY.md.
 const UNIT_UNLOCK: Dictionary = {
-	"swordsman": 1, "archer": 2, "spearman": 3, "shield_knight": 4, "mage": 6, "assassin": 7,
+	"digger": 1, "swordsman": 1, "archer": 2, "spearman": 3, "shield_knight": 4, "mage": 6, "assassin": 7,
 	"priest": 8, "giant": 11, "cavalry": 12, "catapult": 13,
 }
 
@@ -29,7 +29,7 @@ const UNIT_UNLOCK: Dictionary = {
 static func pool(level: int) -> Array[String]:
 	var out: Array[String] = []
 	for k: String in UnitData.ALL_ORDER:
-		if level >= int(UNIT_UNLOCK[k]):
+		if level >= int(UNIT_UNLOCK[k]) and not bool(UnitData.STATS[k].get("worker", false)):  # the enemy buys Diggers separately
 			out.append(k)
 	return out
 
@@ -64,8 +64,9 @@ static func settings(level: int) -> Dictionary:
 		"level": level,
 		"name": level_name(level),
 		"multiplier": UnitData.level_multiplier(level),
-		"start_gold": 40.0,
-		"income": 6.0 + 0.8 * float(level - 1),
+		"start_gold": EconomyData.ENEMY_START_GOLD_BASE + EconomyData.ENEMY_START_GOLD_PER_LEVEL * float(level - 1),
+		"trickle": EconomyData.ENEMY_TRICKLE_BASE + EconomyData.ENEMY_TRICKLE_PER_LEVEL * float(level - 1),
+		"diggers": EconomyData.ENEMY_DIGGERS_BASE + (level - 1) / EconomyData.ENEMY_DIGGERS_LEVELS_PER_EXTRA,
 		"pop_cap": mini(40, 24 + 2 * level),
 		"interval": maxf(1.2, 3.0 - 0.1 * float(level)),
 		"fortress_hp": 3000.0 * (1.0 + 0.08 * float(level - 1)),

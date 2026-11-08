@@ -8,7 +8,9 @@ Created by **Junyuan**.
 
 ## Progress
 
-Each battle gives up to 3 stars (win, your fortress above 50% HP, win under the par time). Spend stars in the **Armory** on the campaign map: hero HP, damage, skill cooldown and rage gain; army HP, damage, gold per second, starting gold and army cap. The four chapters each have their own look (green valleys, snowy Iron Pass, Burning Fields, Ruined Capital).
+Each battle gives up to 3 stars (win, your fortress above 50% HP, win under the par time). Spend stars in the **Armory** on the campaign map: hero HP, damage, skill cooldown and rage gain; army HP, damage, digger load, starting gold and army cap. The four chapters each have their own look (green valleys, snowy Iron Pass, Burning Fields, Ruined Capital).
+
+Gold comes only from **Diggers** (key T, first in the unit bar): they mine the gold rocks beside each fortress and in the middle, and carry the gold home. You start with 1000 gold; the enemy has Diggers too, so killing them slows it down. On boss levels the boss walks out of the enemy gate once the enemy fortress is below 60% HP or after 3 minutes.
 
 ## Controls
 
@@ -21,7 +23,7 @@ Each battle gives up to 3 stars (win, your fortress above 50% HP, win under the 
 | Skills | Q E R F, ultimate G (full rage) | tap the skill slots |
 | Look / zoom | mouse / scroll | drag on the right side |
 | Army orders | 1 Charge, 2 Hold, 3 Follow, 4 Retreat | tap the order buttons |
-| Buy units | Z X C V B N M , . / | tap the unit buttons |
+| Buy units | T (Digger), Z X C V B N M , . / | tap the unit buttons |
 | Tactical view | hold Tab | Map button |
 | Pause / menu | Esc (hold Alt to use the mouse on the HUD) | II button |
 

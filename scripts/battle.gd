@@ -25,6 +25,12 @@ var par_time: float = 0.0
 var result_stars: int = 0
 var result_flags: Array[bool] = [false, false, false]
 
+## Boss levels: the boss is not on the field at the start. WAITING until the enemy fortress drops below
+## EconomyData.BOSS_FORTRESS_FRACTION or EconomyData.BOSS_LATEST_SECONDS pass, then WARNING (horn + countdown),
+## then the boss walks out of the gate and, once it is out (OUT), the fortress is shielded.
+enum BossPhase { NONE, WAITING, WARNING, OUT }
+var boss_phase: BossPhase = BossPhase.NONE
+
 var _clouds: Node3D
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
@@ -51,6 +57,7 @@ func _ready() -> void:
 	_scatter_props()
 	player_fortress = _make_fortress(Fortress.Team.PLAYER, BattlefieldData.FORTRESS_Z, 0.0)
 	enemy_fortress = _make_fortress(Fortress.Team.ENEMY, -BattlefieldData.FORTRESS_Z, PI)
+	GoldRock.build_all(self)
 	fx = Effects.new()
 	fx.name = "Effects"
 	fx.battle = self
@@ -65,7 +72,7 @@ func _ready() -> void:
 	pause.battle = self
 	add_child(pause)
 	_setup_level()  # before the HUD, so it shows the right level, fortress HP and boss
-	Sfx.music("music_boss" if LevelData.is_boss_level(level) else "music_battle")
+	Sfx.music("music_battle")  # the boss music starts when the boss is announced
 	if not unlock_all:  # every battle starts with four swordsmen already at the gate (scripted tests start empty)
 		for i: int in 4:
 			spawn_unit("swordsman", 0, 3.0)
@@ -111,6 +118,11 @@ func _ready() -> void:
 	if args.has("--upgrade-test"):
 		spawner.enabled = false
 		_run_upgrade_test()
+	if args.has("--digger-test"):
+		spawner.enabled = false
+		var dt: DiggerAutotest = DiggerAutotest.new()
+		dt.battle = self
+		add_child(dt)
 	if args.has("--par-test"):
 		_run_par_test()
 	if args.has("--stars-test"):
@@ -182,6 +194,8 @@ func _build_environment() -> void:
 func _process(delta: float) -> void:
 	if not ended:
 		elapsed += delta
+		if boss_phase == BossPhase.WAITING and (enemy_fortress.hp < enemy_fortress.max_hp * EconomyData.BOSS_FORTRESS_FRACTION or elapsed >= EconomyData.BOSS_LATEST_SECONDS):
+			boss_arrives()
 	if _clouds != null:
 		_clouds.rotation.y += deg_to_rad(0.35) * delta
 		# The high tactical camera would fly through the clouds (and see only a white or red wall): hide them up there.
@@ -385,7 +399,7 @@ func _spawn_dummies() -> void:
 
 ## Spawns a soldier at its team's fortress gate. Enemy strength follows the level multiplier.
 func spawn_unit(key: String, team: int, spread: float = 4.0) -> Unit:
-	var u: Unit = Unit.new()
+	var u: Unit = Digger.new() if key == "digger" else Unit.new()
 	u.name = "%s_t%d" % [key, team]
 	u.battle = self
 	var z: float = (BattlefieldData.FORTRESS_Z - 12.0) * (1.0 if team == 0 else -1.0)
@@ -436,7 +450,7 @@ func _setup_level() -> void:
 	add_child(spawner)
 	enemy_fortress.set_max_hp(float(LevelData.settings(level).fortress_hp))
 	if LevelData.is_boss_level(level):
-		_spawn_boss(level)
+		boss_phase = BossPhase.WAITING  # the boss comes later (see boss_arrives)
 	enemy_fortress.destroyed.connect(func(_t: int) -> void: _finish(true))
 	player_fortress.destroyed.connect(func(_t: int) -> void: _finish(false))
 	hero.out_of_lives.connect(func() -> void: _finish(false))
@@ -483,18 +497,41 @@ func _spawn_boss(lvl: int) -> void:
 		add_child(b)
 		b.setup(String(keys[i]), 1, 1.0 + 0.06 * float(lvl - 1))  # bosses scale a bit slower than normal enemies
 		b.configure(lvl, def)
-		var z: float = -(BattlefieldData.FORTRESS_Z - 12.0)
-		var x: float = (float(i) - float(keys.size() - 1) * 0.5) * 6.0
+		var z: float = -(BattlefieldData.FORTRESS_Z - 2.5)  # inside the courtyard: it walks out of the gate
+		var x: float = (float(i) - float(keys.size() - 1) * 0.5) * 3.0
 		b.global_position = Vector3(x, terrain.height_at(x, z), z)
 		b.rotation.y = PI
 		b.died.connect(_on_boss_died)
 		bosses.append(b)
 	boss = bosses[0]
+
+
+## The boss is announced: horn and a countdown, then it walks out of the enemy gate, then it taunts and the fortress is shielded.
+func boss_arrives(warning: float = EconomyData.BOSS_WARNING_SECONDS) -> void:
+	if boss_phase != BossPhase.WAITING:
+		return
+	boss_phase = BossPhase.WARNING
+	var def: Dictionary = BossData.for_level(level)
+	enemy_fortress.hold_last_hp = true  # nobody wins in the few seconds before the boss is out
+	Sfx.music("music_boss")
+	Sfx.play("horn", 0.0)
+	if hud != null:
+		hud.show_alert(String(def.warning), warning)
+	await get_tree().create_timer(warning).timeout
+	if ended:
+		return
+	_spawn_boss(level)
+	enemy_fortress.hold_last_hp = false
+	var waited: float = 0.0
+	while not ended and waited < 12.0 and bosses[0].is_alive() and bosses[0].global_position.z < -(BattlefieldData.FORTRESS_Z - 6.5):
+		await get_tree().create_timer(0.2).timeout
+		waited += 0.2
+	if ended:
+		return
+	boss_phase = BossPhase.OUT
 	enemy_fortress.set_shield(true)
-	# The boss introduces itself a moment after the battle starts.
-	get_tree().create_timer(1.2).timeout.connect(func() -> void:
-		Sfx.play("roar", 0.0)
-		banner(String(def.get("speaker", def.name)), String(def.appear)))
+	Sfx.play("roar", 0.0)
+	banner(String(def.get("speaker", def.name)), String(def.appear))
 
 
 func _on_boss_died(dead: Unit) -> void:
@@ -877,7 +914,7 @@ func _run_theme_test() -> void:
 func _run_upgrade_test() -> void:
 	await get_tree().create_timer(0.5).timeout
 	var base_unit: Unit = spawn_unit("swordsman", 0, 1.0)
-	print("UPGRADE-TEST base: unit hp=", base_unit.max_hp, " dmg=", base_unit.damage, " hero hp=", hero.max_hp, " gold/s=", UpgradeData.value("income"),
+	print("UPGRADE-TEST base: unit hp=", base_unit.max_hp, " dmg=", base_unit.damage, " hero hp=", hero.max_hp, " digger load=", UpgradeData.value("income"),
 		" cap=", army.pop_cap)
 	GameState.stars = {1: 3, 2: 3, 3: 3, 4: 3, 5: 3, 6: 3, 7: 3, 8: 3, 9: 3, 10: 3, 11: 3, 12: 3, 13: 3, 14: 3, 15: 3, 16: 3, 17: 3, 18: 3, 19: 3, 20: 3}
 	print("UPGRADE-TEST stars available: ", GameState.stars_available(), " (60 expected)")
@@ -895,7 +932,7 @@ func _run_upgrade_test() -> void:
 	var up_hero: Hero = Hero.new()
 	var up_army: ArmyManager = ArmyManager.new()
 	print("UPGRADE-TEST max tiers: unit hp=", up_unit.max_hp, " (60 x 1.4 = 84) dmg=", up_unit.damage, " (10 x 1.35 = 13.5) hero hp=", up_hero.max_hp,
-		" (225) start gold=", up_army.gold, " (300) cap=", up_army.pop_cap, " (55) income=", UpgradeData.value("income"))
+		" (225) start gold=", up_army.gold, " (1300) cap=", up_army.pop_cap, " (55) digger load=", UpgradeData.value("income"), " (75)")
 	up_hero.free()
 	up_army.free()
 	var cd_before: float = hero.skills.cooldown_left("q")
@@ -950,9 +987,13 @@ func _run_par_test() -> void:
 	var pool: Array[String] = LevelData.pool(level)
 	var pick: int = 0
 	var t: float = 0.0
+	for i: int in 3:
+		army.try_spawn("digger")  # the bot's opening: three Diggers, then soldiers
 	while not ended and t < 900.0:
 		await get_tree().create_timer(1.0).timeout
 		t += 1.0 * 1.0
+		if army.digger_count() < 3 and army.try_spawn("digger"):
+			continue
 		var key: String = pool[pick % pool.size()]
 		if army.try_spawn(key):
 			pick += 1

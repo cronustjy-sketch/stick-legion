@@ -7,26 +7,28 @@ extends RefCounted
 ##   bonus_vs_big (damage multiplier vs big units), armor (damage reduction), blocks_arrows (frontal shield),
 ##   crit / crit_mult, heal (HP restored per cast), aoe + knockback (ground smash), charge_mult (first hit after a run-up),
 ##   fortress_mult (damage multiplier against fortresses), big (counts as a big unit), radius (body size, m)
+##   worker (a Digger: mines gold, ignores army orders, is not in the enemy fighting pool - see scripts/digger.gd)
 
 const STATS: Dictionary = {
-	"swordsman": {"name": "Swordsman", "hp": 60.0, "dmg": 10.0, "range": 1.2, "speed": 3.0, "cooldown": 0.9, "cost": 20, "pop": 1},
-	"archer": {"name": "Archer", "hp": 36.0, "dmg": 9.0, "range": 18.0, "speed": 2.6, "cooldown": 1.35, "cost": 30, "pop": 1,
+	"digger": {"name": "Digger", "hp": 50.0, "dmg": 4.0, "range": 1.3, "speed": 3.0, "cooldown": 1.2, "cost": 150, "pop": 1, "worker": true},
+	"swordsman": {"name": "Swordsman", "hp": 60.0, "dmg": 10.0, "range": 1.2, "speed": 3.0, "cooldown": 0.9, "cost": 40, "pop": 1},
+	"archer": {"name": "Archer", "hp": 36.0, "dmg": 9.0, "range": 18.0, "speed": 2.6, "cooldown": 1.35, "cost": 55, "pop": 1,
 		"ranged": "arrow", "projectile_speed": 26.0, "kite": true},
-	"spearman": {"name": "Spearman", "hp": 75.0, "dmg": 12.0, "range": 2.2, "speed": 2.8, "cooldown": 1.1, "cost": 35, "pop": 1,
+	"spearman": {"name": "Spearman", "hp": 75.0, "dmg": 12.0, "range": 2.2, "speed": 2.8, "cooldown": 1.1, "cost": 60, "pop": 1,
 		"bonus_vs_big": 2.0},
-	"shield_knight": {"name": "Shield Knight", "hp": 240.0, "dmg": 15.0, "range": 1.3, "speed": 2.2, "cooldown": 1.0, "cost": 45, "pop": 1,
+	"shield_knight": {"name": "Shield Knight", "hp": 240.0, "dmg": 15.0, "range": 1.3, "speed": 2.2, "cooldown": 1.0, "cost": 80, "pop": 1,
 		"armor": 0.35, "blocks_arrows": true},
-	"mage": {"name": "Mage", "hp": 42.0, "dmg": 15.0, "range": 14.0, "speed": 2.2, "cooldown": 2.0, "cost": 60, "pop": 1,
+	"mage": {"name": "Mage", "hp": 42.0, "dmg": 15.0, "range": 14.0, "speed": 2.2, "cooldown": 2.0, "cost": 100, "pop": 1,
 		"ranged": "fireball", "projectile_speed": 15.0, "splash": 2.5, "kite": true},
-	"assassin": {"name": "Assassin", "hp": 48.0, "dmg": 20.0, "range": 1.0, "speed": 5.5, "cooldown": 0.6, "cost": 50, "pop": 1,
+	"assassin": {"name": "Assassin", "hp": 48.0, "dmg": 20.0, "range": 1.0, "speed": 5.5, "cooldown": 0.6, "cost": 90, "pop": 1,
 		"crit": 0.3, "crit_mult": 2.0},
-	"priest": {"name": "Priest", "hp": 55.0, "dmg": 0.0, "range": 10.0, "speed": 2.5, "cooldown": 1.4, "cost": 55, "pop": 1,
+	"priest": {"name": "Priest", "hp": 55.0, "dmg": 0.0, "range": 10.0, "speed": 2.5, "cooldown": 1.4, "cost": 90, "pop": 1,
 		"heal": 16.0},
-	"giant": {"name": "Giant", "hp": 620.0, "dmg": 38.0, "range": 2.8, "speed": 1.4, "cooldown": 2.2, "cost": 150, "pop": 3,
+	"giant": {"name": "Giant", "hp": 620.0, "dmg": 38.0, "range": 2.8, "speed": 1.4, "cooldown": 2.2, "cost": 260, "pop": 3,
 		"big": true, "aoe": 3.2, "knockback": 3.5, "radius": 1.1},
-	"cavalry": {"name": "Cavalry", "hp": 170.0, "dmg": 20.0, "range": 1.6, "speed": 7.0, "cooldown": 1.0, "cost": 90, "pop": 2,
+	"cavalry": {"name": "Cavalry", "hp": 170.0, "dmg": 20.0, "range": 1.6, "speed": 7.0, "cooldown": 1.0, "cost": 160, "pop": 2,
 		"big": true, "charge_mult": 2.0, "radius": 0.8},
-	"catapult": {"name": "Catapult", "hp": 220.0, "dmg": 50.0, "range": 35.0, "speed": 1.2, "cooldown": 4.2, "cost": 140, "pop": 3,
+	"catapult": {"name": "Catapult", "hp": 220.0, "dmg": 50.0, "range": 35.0, "speed": 1.2, "cooldown": 4.2, "cost": 240, "pop": 3,
 		"big": true, "ranged": "boulder", "projectile_speed": 17.0, "splash": 3.0, "fortress_mult": 2.0, "radius": 1.2},
 	"boss_grask": {"name": "Grask the Butcher", "hp": 2600.0, "dmg": 38.0, "range": 4.4, "speed": 1.8, "cooldown": 2.4, "cost": 0, "pop": 0,
 		"big": true, "aoe": 4.2, "knockback": 4.0, "radius": 2.1},
@@ -47,17 +49,19 @@ const HUMANOID_ORDER: Array[String] = [
 
 ## Every unit, in spawn-button order.
 const ALL_ORDER: Array[String] = [
-	"swordsman", "archer", "spearman", "shield_knight", "mage", "assassin", "priest", "giant", "cavalry", "catapult",
+	"digger", "swordsman", "archer", "spearman", "shield_knight", "mage", "assassin", "priest", "giant", "cavalry", "catapult",
 ]
 
 ## Gear per unit. Pieces are low-poly meshes baked into one skinned mesh (see scripts/stickman.gd).
-##   helmet:  cap | kettle | plume | greathelm | wizard | hood | circlet
+##   helmet:  cap | kettle | plume | greathelm | wizard | hood | circlet | mining
 ##   chest:   plate | leather | robe
-##   main/off: sword | dagger | spear | staff | axe | hammer | shield | tower_shield | bow
+##   main/off: sword | dagger | spear | staff | axe | hammer | shield | tower_shield | bow | pickaxe
 ##   style:   swing | thrust | shoot | cast | ride   (which animation set to use)
 ##   attack_anim / timing / bar_height: optional overrides (see scripts/unit.gd)
 ## "catapult" has no stickman gear: it is a machine (scripts/catapult_model.gd).
 const LOOKS: Dictionary = {
+	"digger": {"helmet": "mining", "shoulders": false, "chest": "leather", "cape": false, "belt": true,
+		"main": "pickaxe", "off": "", "style": "swing", "scale": 0.95, "sack": true},
 	"swordsman": {"helmet": "kettle", "shoulders": true, "chest": "plate", "cape": false, "belt": true,
 		"main": "sword", "off": "", "style": "swing", "scale": 1.0},
 	"archer": {"helmet": "hood", "shoulders": false, "chest": "leather", "cape": true, "belt": true,

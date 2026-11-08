@@ -1,6 +1,6 @@
 class_name ArmyManager
 extends Node
-## The player's economy: gold income, kill rewards, population cap and spawning units at the fortress.
+## The player's economy: gold (from Diggers and kills - there is no passive income), population cap and spawning units at the fortress.
 
 signal gold_changed(gold: int)
 signal pop_changed(used: int, cap: int)
@@ -28,7 +28,6 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_buff_left = maxf(_buff_left - delta, 0.0)
-	gold += UpgradeData.value("income") * delta
 	_emit_gold()
 
 
@@ -44,6 +43,8 @@ func pop_of(key: String) -> int:
 func why_not(key: String) -> String:
 	if battle.level < LevelData.unit_unlock(key) and not battle.unlock_all:
 		return Loc.t("%s unlocks at level %d") % [Loc.t(UnitData.STATS[key].name), LevelData.unit_unlock(key)]
+	if key == "digger" and digger_count() >= EconomyData.DIGGER_LIMIT:
+		return Loc.t("Digger limit reached")
 	if gold < cost_of(key):
 		return Loc.t("Not enough gold")
 	if pop_used + pop_of(key) > pop_cap:
@@ -72,6 +73,15 @@ func on_unit_died(u: Unit) -> void:
 		_emit_gold(true)
 	else:
 		recount_pop()
+
+
+func add_gold(amount: float) -> void:
+	gold += amount
+	_emit_gold(true)
+
+
+func digger_count() -> int:
+	return get_tree().get_nodes_in_group("diggers_team0").size()
 
 
 func recount_pop() -> void:

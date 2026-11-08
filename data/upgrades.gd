@@ -20,8 +20,8 @@ const DEFS: Dictionary = {
 	"rage_gain": {"group": "hero", "name": "Rage gain", "fmt": "mult_up", "values": [1.0, 1.15, 1.3, 1.45, 1.6, 1.8]},
 	"unit_hp": {"group": "army", "name": "Unit HP", "fmt": "mult_up", "values": [1.0, 1.08, 1.16, 1.24, 1.32, 1.4]},
 	"unit_damage": {"group": "army", "name": "Unit damage", "fmt": "mult_up", "values": [1.0, 1.07, 1.14, 1.21, 1.28, 1.35]},
-	"income": {"group": "army", "name": "Gold per second", "fmt": "per_second", "values": [10.0, 11.5, 13.0, 14.5, 16.0, 17.5]},
-	"start_gold": {"group": "army", "name": "Starting gold", "fmt": "gold", "values": [100.0, 140.0, 180.0, 220.0, 260.0, 300.0]},
+	"income": {"group": "army", "name": "Digger load", "fmt": "gold", "values": [50.0, 55.0, 60.0, 65.0, 70.0, 75.0]},  # gold per trip (base = EconomyData.DIGGER_CARRY)
+	"start_gold": {"group": "army", "name": "Starting gold", "fmt": "gold", "values": [1000.0, 1060.0, 1120.0, 1180.0, 1240.0, 1300.0]},  # base = EconomyData.START_GOLD
 	"army_cap": {"group": "army", "name": "Army cap", "fmt": "pop", "values": [40.0, 43.0, 46.0, 49.0, 52.0, 55.0]},
 }
 
@@ -33,7 +33,7 @@ const BLURBS: Dictionary = {
 	"rage_gain": "The ultimate meter fills faster.",
 	"unit_hp": "Your soldiers survive longer.",
 	"unit_damage": "Your soldiers hit harder.",
-	"income": "More gold every second.",
+	"income": "Diggers carry more gold home.",
 	"start_gold": "Begin each battle richer.",
 	"army_cap": "Field a bigger army.",
 }
